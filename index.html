@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌟 Game Zone 🌟</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:   #FF4FA3;
+    --purple: #8B2FC9;
+    --yellow: #FFD600;
+    --mint:   #00D9A3;
+    --blue:   #3B9EFF;
+    --orange: #FF7A28;
+    --cream:  #FFF8F0;
+    --dark:   #1A0A2E;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Fredoka', sans-serif;
+    background: var(--dark);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ── STARFIELD ── */
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute; border-radius: 50%;
+    background: #fff; opacity: 0;
+    animation: twinkle var(--d, 3s) var(--delay, 0s) ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0; transform: scale(.4); }
+    50%      { opacity: var(--op, .8); transform: scale(1); }
+  }
+
+  /* ── FLOATING SHAPES ── */
+  .floaters {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .floater {
+    position: absolute; font-size: var(--fs, 2rem);
+    animation: drift var(--d2, 8s) var(--delay2, 0s) ease-in-out infinite alternate;
+    opacity: .55;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  @keyframes drift {
+    from { transform: translateY(0) rotate(var(--r1, -8deg)); }
+    to   { transform: translateY(var(--ty, -28px)) rotate(var(--r2, 8deg)); }
+  }
+
+  /* ── MAIN WRAPPER ── */
+  .wrap {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 3.5rem; }
+
+  .logo-line {
+    display: flex; align-items: center; justify-content: center;
+    gap: .6rem; margin-bottom: .4rem;
+  }
+  .logo-star {
+    font-size: 2.4rem;
+    animation: spinPop 4s ease-in-out infinite;
+  }
+  @keyframes spinPop {
+    0%,100% { transform: rotate(0) scale(1); }
+    25%     { transform: rotate(20deg) scale(1.25); }
+    75%     { transform: rotate(-15deg) scale(1.1); }
+  }
+
+  .site-title {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 1;
+    letter-spacing: .01em;
+    /* rainbow gradient text */
+    background: linear-gradient(135deg,
+      var(--yellow) 0%,
+      var(--pink)   30%,
+      var(--blue)   60%,
+      var(--mint)   100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 4px 18px rgba(255,79,163,.4));
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+  @keyframes titlePulse {
+    0%,100% { filter: drop-shadow(0 4px 18px rgba(255,79,163,.4)); }
+    50%     { filter: drop-shadow(0 4px 28px rgba(59,158,255,.6)); }
+  }
+
+  .site-sub {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    color: rgba(255,255,255,.7);
+    font-weight: 500; margin-top: .5rem;
+    letter-spacing: .02em;
+  }
+  .site-sub span {
+    display: inline-block;
+    animation: bounce .6s ease-in-out infinite alternate;
+  }
+  .site-sub span:nth-child(2) { animation-delay: .1s; }
+  .site-sub span:nth-child(3) { animation-delay: .2s; }
+  .site-sub span:nth-child(4) { animation-delay: .3s; }
+  .site-sub span:nth-child(5) { animation-delay: .4s; }
+  .site-sub span:nth-child(6) { animation-delay: .5s; }
+  .site-sub span:nth-child(7) { animation-delay: .6s; }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-5px); }
+  }
+
+  /* ── CARDS GRID ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 2rem; width: 100%; max-width: 780px;
+  }
+
+  /* ── SINGLE CARD ── */
+  .game-card {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    text-decoration: none;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transform: translateY(0) scale(1);
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+    animation: cardIn .7s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .game-card:nth-child(1) { animation-delay: .1s; }
+  .game-card:nth-child(2) { animation-delay: .25s; }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(50px) scale(.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .game-card:hover {
+    transform: translateY(-12px) scale(1.03);
+  }
+
+  /* Card glow ring */
+  .game-card::before {
+    content: '';
+    position: absolute; inset: -3px;
+    border-radius: 34px;
+    background: var(--glow);
+    z-index: -1; opacity: 0;
+    transition: opacity .25s;
+    filter: blur(12px);
+  }
+  .game-card:hover::before { opacity: 1; }
+
+  /* Quiz card */
+  .card-quiz {
+    --glow: conic-gradient(from 0deg, var(--blue), var(--purple), var(--pink), var(--blue));
+    box-shadow: 0 8px 40px rgba(59,158,255,.25);
+  }
+  .card-quiz:hover { box-shadow: 0 20px 60px rgba(59,158,255,.5); }
+
+  /* Fashion card */
+  .card-fashion {
+    --glow: conic-gradient(from 0deg, var(--pink), var(--yellow), var(--orange), var(--pink));
+    box-shadow: 0 8px 40px rgba(255,79,163,.25);
+  }
+  .card-fashion:hover { box-shadow: 0 20px 60px rgba(255,79,163,.5); }
+
+  /* Card inner bg */
+  .card-bg {
+    position: absolute; inset: 0;
+    background: var(--cbg);
+    z-index: 0;
+  }
+  .card-quiz .card-bg {
+    --cbg: linear-gradient(145deg, #0D1B4E 0%, #1A2875 50%, #0D1B4E 100%);
+  }
+  .card-fashion .card-bg {
+    --cbg: linear-gradient(145deg, #3D0A2E 0%, #6B1045 50%, #3D0A2E 100%);
+  }
+
+  /* Shimmer overlay */
+  .card-shimmer {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(105deg,
+      transparent 40%, rgba(255,255,255,.06) 50%, transparent 60%);
+    background-size: 250% 100%;
+    animation: shimmer 4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 150% 0; }
+    100% { background-position: -50% 0; }
+  }
+
+  .card-content {
+    position: relative; z-index: 2;
+    padding: 2rem 2rem 2.2rem;
+    display: flex; flex-direction: column; gap: 1.1rem;
+  }
+
+  /* Card emoji badge */
+  .card-badge {
+    width: 76px; height: 76px; border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.6rem;
+    background: rgba(255,255,255,.1);
+    border: 2px solid rgba(255,255,255,.15);
+    backdrop-filter: blur(8px);
+    transition: transform .2s;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  }
+  .game-card:hover .card-badge { transform: rotate(-6deg) scale(1.12); }
+
+  /* Card tag */
+  .card-tag {
+    display: inline-block;
+    font-size: .75rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    padding: .22rem .75rem; border-radius: 50px;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    width: fit-content;
+  }
+  .card-quiz .card-tag {
+    --tag-bg: rgba(59,158,255,.25); --tag-color: #7DC8FF;
+  }
+  .card-fashion .card-tag {
+    --tag-bg: rgba(255,79,163,.25); --tag-color: #FFB3D9;
+  }
+
+  .card-title {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    color: #fff; line-height: 1.1;
+    text-shadow: 0 2px 12px rgba(0,0,0,.4);
+  }
+  .card-title em {
+    font-style: normal;
+    -webkit-text-fill-color: transparent;
+    background: var(--title-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .card-quiz .card-title em { --title-grad: linear-gradient(90deg, var(--blue), var(--mint)); }
+  .card-fashion .card-title em { --title-grad: linear-gradient(90deg, var(--pink), var(--yellow)); }
+
+  .card-desc {
+    font-size: 1rem; color: rgba(255,255,255,.65);
+    line-height: 1.55; font-weight: 500;
+  }
+
+  /* Feature pills */
+  .card-pills {
+    display: flex; flex-wrap: wrap; gap: .45rem;
+  }
+  .pill {
+    font-size: .8rem; font-weight: 600;
+    padding: .25rem .72rem; border-radius: 50px;
+    background: rgba(255,255,255,.09);
+    color: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+
+  /* Play button */
+  .card-btn {
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    padding: .8rem 1.6rem; border-radius: 50px; border: none;
+    font-family: 'Fredoka', sans-serif; font-size: 1.15rem; font-weight: 700;
+    cursor: pointer; width: 100%; margin-top: .4rem;
+    transition: transform .18s, box-shadow .18s;
+    letter-spacing: .02em;
+  }
+  .card-btn:hover { transform: scale(1.05); }
+  .card-quiz .card-btn {
+    background: linear-gradient(135deg, #3B9EFF, #7B61FF);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(59,158,255,.45);
+  }
+  .card-quiz .card-btn:hover { box-shadow: 0 8px 30px rgba(59,158,255,.65); }
+  .card-fashion .card-btn {
+    background: linear-gradient(135deg, var(--pink), var(--orange));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,79,163,.45);
+  }
+  .card-fashion .card-btn:hover { box-shadow: 0 8px 30px rgba(255,79,163,.65); }
+
+  /* Btn arrow */
+  .btn-arrow {
+    display: inline-block;
+    transition: transform .2s;
+  }
+  .game-card:hover .btn-arrow { transform: translateX(5px); }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 3rem;
+    text-align: center;
+    color: rgba(255,255,255,.28);
+    font-size: .9rem; font-weight: 500;
+  }
+  .footer span {
+    color: var(--pink); -webkit-text-fill-color: var(--pink);
+    animation: heartbeat 1.2s ease-in-out infinite;
+    display: inline-block;
+  }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    50%      { transform: scale(1.35); }
+  }
+
+  /* ── CUSTOM CURSOR SPARKLE ── */
+  .cursor-sparkle {
+    position: fixed; pointer-events: none; z-index: 9999;
+    font-size: 1.2rem; opacity: 0;
+    animation: sparkleOut .7s ease-out forwards;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes sparkleOut {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -120%) scale(.3); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Starfield -->
+<div class="stars" id="stars"></div>
+<!-- Floating emoji -->
+<div class="floaters" id="floaters"></div>
+
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo-line">
+      <span class="logo-star">⭐</span>
+      <h1 class="site-title">Game Zone!</h1>
+      <span class="logo-star" style="animation-delay:.4s">⭐</span>
+    </div>
+    <p class="site-sub">
+      <span>P</span><span>i</span><span>c</span><span>k</span>
+      <span> </span>
+      <span>a</span>
+      <span> </span>
+      <span>g</span><span>a</span><span>m</span><span>e</span>
+      <span> </span>
+      <span>t</span><span>o</span>
+      <span> </span>
+      <span>p</span><span>l</span><span>a</span><span>y</span>
+      <span>!</span>
+    </p>
+  </header>
+
+  <!-- Game cards -->
+  <div class="cards">
+
+    <!-- Quiz card -->
+    <a class="game-card card-quiz" href="quiz.html">
+      <div class="card-bg"></div>
+      <div class="card-shimmer"></div>
+      <div class="card-content">
+        <div class="card-badge">🧠</div>
+        <span class="card-tag">✨ Personality Quiz</span>
+        <h2 class="card-title">The Quiz<br><em>About You!</em></h2>
+        <p class="card-desc">8 fun quizzes to discover what color, animal, Disney character, superhero and more you really are!</p>
+        <div class="card-pills">
+          <span class="pill">🎨 Colors</span>
+          <span class="pill">🦁 Animals</span>
+          <span class="pill">👸 Disney</span>
+          <span class="pill">🦸 Superheroes</span>
+          <span class="pill">🍕 Foods</span>
+          <span class="pill">⭐ Celebrities</span>
+          <span class="pill">🔢 Numbers</span>
+        </div>
+        <button class="card-btn">
+          Play Now <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </a>
+
+    <!-- Fashion card -->
+    <a class="game-card card-fashion" href="fashion_designer.html">
+      <div class="card-bg"></div>
+      <div class="card-shimmer"></div>
+      <div class="card-content">
+        <div class="card-badge">👗</div>
+        <span class="card-tag">✨ Dress-Up Game</span>
+        <h2 class="card-title">Fashion<br><em>Studio!</em></h2>
+        <p class="card-desc">Design the perfect outfit for your model — then take a photo shoot in amazing locations around the world!</p>
+        <div class="card-pills">
+          <span class="pill">💇 Hair</span>
+          <span class="pill">👚 Tops</span>
+          <span class="pill">👟 Shoes</span>
+          <span class="pill">👒 Hats</span>
+          <span class="pill">💍 Jewelry</span>
+          <span class="pill">📸 Photoshoot</span>
+        </div>
+        <button class="card-btn">
+          Play Now <span class="btn-arrow">→</span>
+        </button>
+      </div>
+    </a>
+
+  </div>
+
+  <footer class="footer">
+    Made with <span>♥</span> just for you
+  </footer>
+
+</div>
+
+<script>
+// ── GENERATE STARS ──
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 120; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = 1 + Math.random() * 3;
+  s.style.cssText = `
+    left:${Math.random()*100}%;
+    top:${Math.random()*100}%;
+    width:${size}px; height:${size}px;
+    --d:${2+Math.random()*4}s;
+    --delay:${Math.random()*5}s;
+    --op:${0.3+Math.random()*0.7};
+  `;
+  starsEl.appendChild(s);
+}
+
+// ── GENERATE FLOATERS ──
+const floaterEmojis = ['✨','💖','🌟','🎀','💫','🦋','🌈','💎','🎉','⭐','🌸','🎊'];
+const floatersEl = document.getElementById('floaters');
+for (let i = 0; i < 18; i++) {
+  const f = document.createElement('div');
+  f.className = 'floater';
+  f.textContent = floaterEmojis[i % floaterEmojis.length];
+  const size = .9 + Math.random() * 1.4;
+  f.style.cssText = `
+    left:${Math.random()*95}%;
+    top:${Math.random()*95}%;
+    --fs:${size}rem;
+    --d2:${5+Math.random()*7}s;
+    --delay2:${Math.random()*6}s;
+    --ty:-${12+Math.random()*24}px;
+    --r1:${-10+Math.random()*20}deg;
+    --r2:${-10+Math.random()*20}deg;
+  `;
+  floatersEl.appendChild(f);
+}
+
+// ── CURSOR SPARKLE ──
+const sparkleEmojis = ['✨','⭐','💫','🌟','💖','🎉'];
+document.addEventListener('click', e => {
+  const sp = document.createElement('div');
+  sp.className = 'cursor-sparkle';
+  sp.style.left = e.clientX + 'px';
+  sp.style.top  = e.clientY + 'px';
+  sp.textContent = sparkleEmojis[Math.floor(Math.random() * sparkleEmojis.length)];
+  document.body.appendChild(sp);
+  setTimeout(() => sp.remove(), 750);
+});
+</script>
+</body>
+</html>
