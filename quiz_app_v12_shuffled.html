@@ -1,0 +1,343 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.07)}100%{transform:scale(1);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bgm{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.qb,.ab{cursor:pointer;border:none;font-family:'Fredoka',sans-serif;transition:transform .16s,box-shadow .16s,filter .15s}
+.qb:hover{transform:translateY(-8px) scale(1.05);filter:brightness(1.08)}
+.qb:active,.ab:active{transform:scale(.93)}
+.ab:hover{transform:scale(1.06);filter:brightness(1.09)}
+.spinner{width:56px;height:56px;border:6px solid rgba(255,255,255,.25);border-top:6px solid #fff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 26px}
+</style>
+<div id="app" style="min-height:600px;background:linear-gradient(135deg,#667eea,#f64f59,#f093fb,#4facfe,#43e97b);background-size:400% 400%;animation:bgm 10s ease infinite;padding:20px 16px 48px;font-family:'Fredoka',sans-serif"></div>
+<script>
+const F="'Fredoka',sans-serif";
+
+// Fisher-Yates shuffle — returns new shuffled array
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// Pre-shuffle all questions for the current quiz attempt
+// Each shuffledQ = { t, displayOpts:[{text, resultIdx}] }
+function buildShuffledQuestions(qz){
+  return qz.qs.map(q=>{
+    const indexed=q.o.map((text,idx)=>({text,resultIdx:idx}));
+    const shuffled=shuffle(indexed);
+    return{t:q.t,displayOpts:shuffled};
+  });
+}
+
+const CARD_ART={
+  color:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="175" fill="#1a1a2e"/><circle cx="50" cy="50" r="60" fill="#FF6B6B" opacity=".8"/><circle cx="150" cy="90" r="55" fill="#4ECDC4" opacity=".7"/><circle cx="250" cy="50" r="50" fill="#FFE66D" opacity=".8"/><circle cx="100" cy="140" r="45" fill="#A8E6CF" opacity=".75"/><circle cx="220" cy="140" r="50" fill="#C3A6FF" opacity=".7"/></svg>`,
+  disney:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="sky" cx="50%" cy="30%"><stop offset="0%" stop-color="#1a1a4e"/><stop offset="100%" stop-color="#0d0d1a"/></radialGradient></defs><rect width="300" height="175" fill="url(#sky)"/><polygon points="150,20 160,60 200,60 168,82 180,120 150,98 120,120 132,82 100,60 140,60" fill="#FFD700" opacity=".9"/><circle cx="50" cy="30" r="4" fill="white" opacity=".8"/><circle cx="80" cy="20" r="3" fill="white" opacity=".7"/><circle cx="230" cy="25" r="5" fill="white" opacity=".9"/><circle cx="260" cy="40" r="3" fill="white" opacity=".6"/><circle cx="20" cy="60" r="2" fill="white" opacity=".7"/><circle cx="280" cy="15" r="2" fill="white" opacity=".8"/><rect x="0" y="130" width="300" height="45" fill="#2d1b69" opacity=".6"/><rect x="30" y="110" width="40" height="65" fill="#4a2580" rx="5"/><rect x="120" y="95" width="60" height="80" fill="#3d1f73" rx="5"/><rect x="220" y="115" width="50" height="60" fill="#4a2580" rx="5"/></svg>`,
+  princess:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffd6e7"/><stop offset="100%" stop-color="#ffb3d1"/></linearGradient></defs><rect width="300" height="175" fill="url(#sky2)"/><polygon points="150,5 165,55 215,55 175,80 190,130 150,105 110,130 125,80 85,55 135,55" fill="#FFD700" opacity=".85"/><ellipse cx="150" cy="160" rx="120" ry="30" fill="#FF69B4" opacity=".4"/><circle cx="70" cy="40" r="8" fill="#FF9ED2" opacity=".6"/><circle cx="230" cy="30" r="6" fill="#FFB3D9" opacity=".7"/><circle cx="40" cy="80" r="5" fill="#FF9ED2" opacity=".5"/><circle cx="270" cy="70" r="7" fill="#FFB3D9" opacity=".6"/><rect x="110" y="120" width="80" height="55" fill="#b91d73" opacity=".5" rx="4"/><polygon points="110,120 150,95 190,120" fill="#d4228a" opacity=".6"/></svg>`,
+  animal:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#87CEEB"/><stop offset="100%" stop-color="#E0F7FA"/></linearGradient></defs><rect width="300" height="175" fill="url(#sky3)"/><ellipse cx="150" cy="80" rx="130" ry="60" fill="#4CAF50" opacity=".3"/><circle cx="60" cy="50" r="25" fill="white" opacity=".6"/><circle cx="40" cy="55" r="20" fill="white" opacity=".5"/><circle cx="80" cy="45" r="18" fill="white" opacity=".5"/><circle cx="220" cy="40" r="22" fill="white" opacity=".6"/><circle cx="245" cy="45" r="18" fill="white" opacity=".5"/><rect x="0" y="130" width="300" height="45" fill="#2E7D32" opacity=".7"/><rect x="0" y="120" width="300" height="20" fill="#388E3C" opacity=".6"/><circle cx="50" cy="155" r="15" fill="#1B5E20" opacity=".5"/><circle cx="150" cy="150" r="18" fill="#2E7D32" opacity=".5"/><circle cx="250" cy="155" r="15" fill="#1B5E20" opacity=".5"/></svg>`,
+  food:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="175" fill="#FFF8E1"/><circle cx="80" cy="80" r="55" fill="#FF6B35" opacity=".85"/><circle cx="80" cy="80" r="45" fill="#FF8C42" opacity=".8"/><circle cx="65" cy="70" r="12" fill="#CC3300" opacity=".7"/><circle cx="90" cy="85" r="10" fill="#CC3300" opacity=".7"/><circle cx="75" cy="95" r="11" fill="#CC3300" opacity=".7"/><circle cx="200" cy="90" r="50" fill="#FFD93D" opacity=".8"/><ellipse cx="200" cy="90" rx="30" ry="20" fill="#FFA500" opacity=".6"/><rect x="190" y="40" width="4" height="30" fill="#4CAF50" opacity=".8"/><ellipse cx="210" cy="45" rx="15" ry="10" fill="#66BB6A" opacity=".7"/><circle cx="270" cy="60" r="20" fill="#F48FB1" opacity=".7"/><circle cx="270" cy="60" r="14" fill="#F06292" opacity=".7"/><ellipse cx="270" cy="75" rx="18" ry="8" fill="#FCE4EC" opacity=".6"/></svg>`,
+  celeb:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="175" fill="#1a0533"/><circle cx="150" cy="175" r="120" fill="#FF6B00" opacity=".4"/><circle cx="150" cy="175" r="80" fill="#FFD700" opacity=".3"/><polygon points="150,50 155,70 175,70 160,82 166,102 150,90 134,102 140,82 125,70 145,70" fill="#FFD700" opacity=".9"/><polygon points="50,30 53,42 65,42 55,49 59,61 50,54 41,61 45,49 35,42 47,42" fill="#FFD700" opacity=".6"/><polygon points="250,25 253,37 265,37 255,44 259,56 250,49 241,56 245,44 235,37 247,37" fill="#FFD700" opacity=".6"/><circle cx="30" cy="80" r="3" fill="white" opacity=".5"/><circle cx="270" cy="60" r="3" fill="white" opacity=".5"/></svg>`,
+  hero:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="city" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d0d2b"/><stop offset="100%" stop-color="#1a1a4e"/></linearGradient></defs><rect width="300" height="175" fill="url(#city)"/><circle cx="150" cy="-10" r="80" fill="#E94560" opacity=".3"/><rect x="10" y="90" width="35" height="85" fill="#1f1f4e" opacity=".9"/><rect x="55" y="70" width="45" height="105" fill="#252558" opacity=".9"/><rect x="110" y="60" width="30" height="115" fill="#1f1f4e" opacity=".9"/><rect x="150" y="75" width="55" height="100" fill="#252558" opacity=".9"/><rect x="215" y="55" width="40" height="120" fill="#1f1f4e" opacity=".9"/><rect x="265" y="80" width="35" height="95" fill="#252558" opacity=".9"/><rect x="20" y="100" width="5" height="5" fill="#FFD700" opacity=".7"/><rect x="65" y="85" width="5" height="5" fill="#FFD700" opacity=".7"/><rect x="165" y="88" width="5" height="5" fill="#FFD700" opacity=".6"/><polygon points="150,20 160,45 188,45 166,60 174,85 150,70 126,85 134,60 112,45 140,45" fill="#FFD700" opacity=".9"/></svg>`,
+  number:`<svg viewBox="0 0 300 175" xmlns="http://www.w3.org/2000/svg"><rect width="300" height="175" fill="#E3F2FD"/><text x="20" y="90" font-size="80" fill="#1565C0" opacity=".15" font-weight="bold">1 2 3</text><text x="10" y="160" font-size="80" fill="#1976D2" opacity=".12" font-weight="bold">4 5 6</text><circle cx="50" cy="50" r="20" fill="#42A5F5" opacity=".5"/><circle cx="250" cy="130" r="25" fill="#1E88E5" opacity=".4"/><circle cx="150" cy="30" r="15" fill="#64B5F6" opacity=".5"/><polygon points="240,20 250,45 275,45 255,60 263,85 240,70 217,85 225,60 205,45 230,45" fill="#1565C0" opacity=".4"/></svg>`
+};
+
+const BTN_ART=[
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#0d4b7a"/><circle cx="100" cy="130" r="90" fill="#1a6ba0" opacity=".6"/><circle cx="30" cy="20" r="40" fill="#2196F3" opacity=".3"/></svg>`,
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#1b5e20"/><rect x="0" y="80" width="200" height="40" fill="#2E7D32" opacity=".8"/><circle cx="100" cy="85" r="35" fill="#43A047" opacity=".4"/></svg>`,
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#4a1580"/><circle cx="100" cy="60" r="80" fill="#7B1FA2" opacity=".4"/><polygon points="100,10 110,40 142,40 118,58 128,88 100,70 72,88 82,58 58,40 90,40" fill="#FFD700" opacity=".6"/></svg>`,
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#7a2200"/><circle cx="100" cy="130" r="100" fill="#BF360C" opacity=".5"/><circle cx="60" cy="30" r="25" fill="#FF5722" opacity=".4"/></svg>`,
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#1a3a1a"/><rect x="0" y="70" width="200" height="50" fill="#2E7D32" opacity=".7"/><circle cx="120" cy="65" r="30" fill="#388E3C" opacity=".5"/></svg>`,
+  `<svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="120" fill="#4a3800"/><circle cx="100" cy="-10" r="80" fill="#F57F17" opacity=".5"/><circle cx="30" cy="100" r="40" fill="#FFA000" opacity=".3"/></svg>`
+];
+
+function svgBg(svg){return`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;}
+
+const QZ=[
+{id:"color",title:"What Color Are You?",badge:"COLOR",hdr:"linear-gradient(135deg,#f7971e,#ffd200)",art:"color",
+ res:["Red","Blue","Yellow","Green","Purple","Orange"],
+ rc:["linear-gradient(135deg,#c0392b,#e74c3c)","linear-gradient(135deg,#1a6ba0,#2196F3)","linear-gradient(135deg,#f39c12,#f1c40f)","linear-gradient(135deg,#1b5e20,#27ae60)","linear-gradient(135deg,#6c3483,#8e44ad)","linear-gradient(135deg,#d35400,#e67e22)"],
+ bb:["#FF8FA3","#74C0FC","#FFE066","#8CE99A","#CC5DE8","#FFA94D"],bt:["#7d0000","#003d6e","#5a4a00","#1a4d00","#3b0080","#7d3500"],
+ qs:[
+  {t:"What do you love doing on weekends?",o:["Playing sports and running outside","Drawing, painting, or making things","Laughing and joking with friends","Exploring nature and going on walks","Daydreaming and making up stories","Baking or cooking something delicious"]},
+  {t:"How do you feel every morning?",o:["Pumped up and totally ready to go","Calm, peaceful, and quiet","Cheerful and happy right away","Fresh and full of new energy","Still dreamy and in my own world","Warm, cozy, and comfortable"]},
+  {t:"What kind of friend are you?",o:["The brave one who leads the group","The creative one with big wild ideas","The funny one who cracks everyone up","The kind and gentle listener","The dreamy and imaginative one","The enthusiastic one who hypes everyone"]},
+  {t:"Pick your favorite kind of weather!",o:["Hot and sunny all day long","Cool and rainy with a cozy book","Bright and cheerful with a nice breeze","Fresh and crisp and clean outside","Mysterious and foggy and still","Warm with a gorgeous glowing sunset"]},
+  {t:"What makes you really proud?",o:["Winning a game or a race","Making something really beautiful","Making someone laugh until they cry","Helping an animal or a plant grow","Coming up with a brand new idea","Doing something really kind for someone"]},
+  {t:"Your friends would describe you as...",o:["Super brave and bold","Incredibly creative and artistic","Absolutely hilarious all the time","Gentle, sweet, and always caring","Full of wild and wonderful ideas","Always enthusiastic and full of energy"]}
+ ]},
+{id:"disney",title:"What Disney Character Are You?",badge:"DISNEY",hdr:"linear-gradient(135deg,#6a11cb,#2575fc)",art:"disney",
+ res:["Simba","Elsa","Moana","Buzz Lightyear","Stitch","Woody"],
+ rc:["linear-gradient(135deg,#c8901a,#e6b020)","linear-gradient(135deg,#6dd5fa,#2980b9)","linear-gradient(135deg,#11998e,#38ef7d)","linear-gradient(135deg,#4a90d9,#b0d4ff)","linear-gradient(135deg,#44cf6c,#1e8a3f)","linear-gradient(135deg,#c9a227,#8b6914)"],
+ bb:["#FFD43B","#A5D8FF","#63E6BE","#74C0FC","#8CE99A","#FFA94D"],bt:["#5a4a00","#003d6e","#0a4d37","#003d6e","#1a4d00","#7d3500"],
+ qs:[
+  {t:"What is your biggest strength?",o:["Bravery — I always step up","My incredible power inside","Following my heart no matter what","Never ever giving up","Being loyal and really funny","Being the most dependable friend"]},
+  {t:"What adventure sounds most exciting?",o:["A quest to save my whole kingdom","Escaping to find my true freedom","Sailing the wide open ocean","Blasting off into outer space","Getting into wild and silly trouble","Protecting my friends on a big journey"]},
+  {t:"When there is a problem, you...",o:["Stand up and face it head on","Use your special hidden power","Trust your gut feeling completely","Come up with a solid action plan","Make a joke to lighten the mood","Rally all of your friends together"]},
+  {t:"Pick the one word that fits you best!",o:["Fearless","Powerful","Determined","Heroic","Hilarious","Loyal"]},
+  {t:"What matters most to you in life?",o:["Protecting your whole family","Finding true freedom at last","Discovering who you really are","Being a true and real hero","Fun adventures with your best friends","Standing by your friends no matter what"]},
+  {t:"How do your friends describe you?",o:["So brave and totally bold","Amazing and incredibly powerful","Always following your biggest dreams","The one who never ever quits","Makes everyone laugh all the time","The most loyal friend they have ever had"]}
+ ]},
+{id:"princess",title:"What Disney Princess Are You?",badge:"PRINCESS",hdr:"linear-gradient(135deg,#f953c6,#b91d73)",art:"princess",
+ res:["Moana","Cinderella","Rapunzel","Ariel","Belle","Mulan"],
+ rc:["linear-gradient(135deg,#0077b6,#48cae4)","linear-gradient(135deg,#b8d4f5,#6a9fd8)","linear-gradient(135deg,#f5a623,#f7d794)","linear-gradient(135deg,#0d47a1,#29b6f6)","linear-gradient(135deg,#fbc02d,#f9a825)","linear-gradient(135deg,#d32f2f,#ff8f00)"],
+ bb:["#74C0FC","#FFD43B","#F783AC","#63E6BE","#E8BAFF","#FF8FA3"],bt:["#003d6e","#5a4a00","#7d003b","#0a4d37","#3b0080","#7d0000"],
+ qs:[
+  {t:"What matters most to you?",o:["Adventure and the wide open sea","Finding your dream come true","Freedom to explore the whole world","Collecting treasures and exploring everywhere","Reading and learning absolutely everything","Protecting your whole family with all you have"]},
+  {t:"What is your most special talent?",o:["Navigating and sailing the ocean","Being graceful and incredibly kind","Painting and incredible creativity","Talking to and understanding animals","Reading and being really smart","Fighting bravely for what is right"]},
+  {t:"What does your dream day look like?",o:["Sailing across the open ocean","Dancing at a beautiful royal ball","Exploring somewhere completely magical","Swimming and finding hidden treasures","Reading in a cozy quiet library","Training hard every day to get stronger"]},
+  {t:"What is your absolute best quality?",o:["Bravery and total determination","Kindness and natural grace","Curiosity and amazing creativity","Wonder and wild unstoppable enthusiasm","Intelligence and deep wisdom","Courage and incredible strength"]},
+  {t:"What does your dream home look like?",o:["Right by the rolling ocean","A magical sparkling palace","A tall tower with views of the world","Deep under the beautiful sea","A cozy cottage packed full of books","A mountain village with all your family"]},
+  {t:"How do you handle a really tough villain?",o:["Sail straight toward the challenge","Stay hopeful and always be kind","Use your creativity to outsmart them","Collect all the clues and figure it out","Use your brain to find their weakness","Fight with every bit of your courage"]}
+ ]},
+{id:"animal",title:"What Animal Are You?",badge:"ANIMAL",hdr:"linear-gradient(135deg,#11998e,#38ef7d)",art:"animal",
+ res:["Lion","Dolphin","Fox","Panda","Eagle","Wolf"],
+ rc:["linear-gradient(135deg,#c8901a,#f0c040)","linear-gradient(135deg,#0077b6,#00b4d8)","linear-gradient(135deg,#e65c00,#f9d423)","linear-gradient(135deg,#2d3436,#b2bec3)","linear-gradient(135deg,#636e72,#2d3436)","linear-gradient(135deg,#4a4e69,#22223b)"],
+ bb:["#FFD43B","#63E6BE","#FFA94D","#B2F2BB","#A5D8FF","#74C0FC"],bt:["#5a4a00","#0a4d37","#7d3500","#1a4d00","#003d6e","#003d6e"],
+ qs:[
+  {t:"You prefer to be around...",o:["A big group that looks up to me","As many friends as possible","One or two really clever friends","Mostly on my own, chilling","Nobody — I love being completely solo","My small close and trusted group"]},
+  {t:"What is your morning routine?",o:["Jump up and take charge right away","Find someone to play with immediately","Plan out a clever strategy for the day","Hit snooze again and again and again","Wake up early and watch everything","Stretch and then gather my people"]},
+  {t:"Your friends call you...",o:["The brave and bold leader","The playful social butterfly","The sneaky clever one","The sweet and gentle one","The mysterious and independent one","The most loyal friend around"]},
+  {t:"You would rather...",o:["Be loud and completely in charge","Jump and splash in water all day long","Outsmart someone much bigger than you","Find a cozy spot and take a long nap","Soar way up high above everything","Explore wild places with your whole crew"]},
+  {t:"When you are scared, you...",o:["Stand tall and face it head on","Swim away really really fast","Think your way cleverly out of it","Freeze completely still and wait it out","Fly way up high above it all","Call your whole group in for backup"]},
+  {t:"What do you love most in life?",o:["Being the one everyone follows","Playing and having fun all day long","Being the cleverest one in any room","Sleeping and eating incredibly well","Going wherever you want — total freedom","Family and loyalty above everything else"]}
+ ]},
+{id:"food",title:"What Food Are You?",badge:"FOOD",hdr:"linear-gradient(135deg,#f7971e,#ff416c)",art:"food",
+ res:["Pizza","Tacos","Ice Cream","Chocolate Cake","Mac and Cheese","Strawberries"],
+ rc:["linear-gradient(135deg,#c0392b,#e74c3c)","linear-gradient(135deg,#f39c12,#16a085)","linear-gradient(135deg,#a8edea,#fed6e3)","linear-gradient(135deg,#3e1c00,#8b4513)","linear-gradient(135deg,#f6d365,#fda085)","linear-gradient(135deg,#e84393,#ff6b9d)"],
+ bb:["#FF8FA3","#FFA94D","#74C0FC","#F783AC","#FFD43B","#F8BBD0"],bt:["#7d0000","#7d3500","#003d6e","#7d003b","#5a4a00","#7d003b"],
+ qs:[
+  {t:"How do people usually describe you?",o:["Everyone's absolute all-time favorite","Bold, exciting, and full of surprises","Sweet, cool, and totally refreshing","Rich, warm, and perfect for special days","Cozy and comforting just like being home","Bright, fresh, and cheerful every day"]},
+  {t:"At every party, you are...",o:["The one that absolutely everyone wants","The most exciting and wild one there","The sweet cool treat everyone reaches for","The total star of the whole celebration","The reliable comfort that everyone needs","The fresh and colorful bright spot"]},
+  {t:"What is your energy like day to day?",o:["Warm, reliable, and always consistent","Spicy, bold, and full of surprises","Sweet, cool, and completely chill","Rich, joyful, and totally festive","Cozy, steady, and deeply calming","Light, fresh, and full of energy"]},
+  {t:"Pick your favorite time of year!",o:["All year round — I am always great","Summer — hot, exciting, and loud","Summer — sweet, cool, and breezy","Winter — cozy, warm, and festive","Fall — comforting and full of warmth","Spring — fresh, bright, and brand new"]},
+  {t:"How do you make the people around you feel?",o:["Happy and completely satisfied","Wowed and super excited","Cool and totally refreshed","Joyful and really celebrated","Safe and completely at home","Light and bursting with energy"]},
+  {t:"What is your personal style?",o:["Classic and reliable — always a hit","Colorful, loud, and adventurous","Smooth, sweet, and perfectly cool","Fancy, rich, and extra special","Simple, warm, and deeply comforting","Fresh, bright, and totally natural"]}
+ ]},
+{id:"celeb",title:"What Celebrity Are You?",badge:"CELEB",hdr:"linear-gradient(135deg,#fc4a1a,#f7b733)",art:"celeb",
+ res:["Taylor Swift","Dwayne Johnson","Selena Gomez","LeBron James","Kevin Hart","Zendaya"],
+ rc:["linear-gradient(135deg,#c0392b,#f39c12)","linear-gradient(135deg,#1a1a1a,#555)","linear-gradient(135deg,#9b59b6,#e91e63)","linear-gradient(135deg,#1565c0,#ffd600)","linear-gradient(135deg,#ff6b35,#f7931e)","linear-gradient(135deg,#7b2d8b,#e91e8c)"],
+ bb:["#FFD43B","#FF8FA3","#F783AC","#74C0FC","#FFA94D","#CC5DE8"],bt:["#5a4a00","#7d0000","#7d003b","#003d6e","#7d3500","#3b0080"],
+ qs:[
+  {t:"What is your biggest talent?",o:["Writing and singing incredible songs","Being incredibly strong and athletic","Performing and connecting with people","Being the absolute best at sports","Making every single person laugh","Fashion, acting, and amazing personal style"]},
+  {t:"What would your fans love about you?",o:["Your emotional and powerful music","Your strength and great sense of humor","Your warm heart and beautiful music","Your champion-level skills and work ethic","Your non-stop hilarious jokes","Your incredible fashion and acting talent"]},
+  {t:"How do you unwind after a long day?",o:["Write new songs in your journal","Work out and train even harder","Practice dancing and performing new routines","Watch game film and keep on training","Watch comedies and think up new jokes","Design new outfits and get totally creative"]},
+  {t:"What is your dream performance or event?",o:["A sold-out stadium concert","A huge championship match or event","A live world tour concert","The championship game on national TV","A massive comedy show on television","A runway show at a huge fashion event"]},
+  {t:"What do you want to be remembered for?",o:["Songs that truly changed people's lives","Inspiring others to be strong and keep going","Bringing joy through music and kindness","Being the greatest athlete who ever lived","Making the whole entire world laugh","Breaking boundaries in fashion and film"]},
+  {t:"What would you spend a million dollars on?",o:["A dream recording studio","A world-class gym and training facility","A beautiful music and dance studio","The best sports training setup ever built","A huge comedy tour and live show","A fashion design and creative studio"]}
+ ]},
+{id:"hero",title:"What Superhero Are You?",badge:"HERO",hdr:"linear-gradient(135deg,#1a1a2e,#e94560)",art:"hero",
+ res:["Spider-Man","Wonder Woman","Iron Man","Captain America","Black Panther","Thor"],
+ rc:["linear-gradient(135deg,#c0392b,#2980b9)","linear-gradient(135deg,#b8860b,#1565c0)","linear-gradient(135deg,#c0392b,#f39c12)","linear-gradient(135deg,#1565c0,#c0392b)","linear-gradient(135deg,#1a1a2e,#9b59b6)","linear-gradient(135deg,#2980b9,#c0392b)"],
+ bb:["#FF8FA3","#74C0FC","#FFA94D","#A5D8FF","#8CE99A","#FFD43B"],bt:["#7d0000","#003d6e","#7d3500","#003d6e","#1a4d00","#5a4a00"],
+ qs:[
+  {t:"What superpower would you pick?",o:["Sticking to walls and swinging on webs","Super strength and a magic lasso","Genius brain and incredible high-tech armor","Perfect athletic body with an unbreakable shield","Super speed and vibranium power","Commanding thunder and lightning from the sky"]},
+  {t:"Why do you fight the bad guys?",o:["With great power comes great responsibility","To defend truth and justice at all times","Because I built something truly incredible","It is simply the right thing to do","To protect my kingdom and my people","Because I am worthy and I have the power"]},
+  {t:"What is your biggest weakness?",o:["I care so much about everyone around me","I believe in people maybe a little too much","I can be way too confident sometimes","I am too stubborn and never back down","The huge weight of being a leader and king","I have a really strong and quick temper"]},
+  {t:"Pick your dream headquarters!",o:["The rooftops of a huge busy city","A magical hidden island paradise","A high-tech tower with all the gadgets","A secret underground command base","The most advanced city in the whole world","A legendary realm beyond the rainbow bridge"]},
+  {t:"How do you stop a villain?",o:["Quick thinking and clever web moves","Fight them with power and always the truth","Outsmart them completely with amazing technology","Never give up and never ever surrender","Plan very carefully and then strike precisely","Hit them with absolutely everything you have got"]},
+  {t:"After saving the day, you...",o:["Crack jokes and totally laugh it off","Give a big inspiring speech to the crowd","Upgrade your suit with brand new technology","Thank your whole team and share all the glory","Return home to rule your kingdom wisely","Celebrate loudly and hugely with all your friends"]}
+ ]},
+{id:"number",title:"What Number Are You?",badge:"NUMBER",hdr:"linear-gradient(135deg,#00b4d8,#0077b6)",art:"number",
+ res:["1","2","3","4","5","6"],
+ rc:["linear-gradient(135deg,#f39c12,#e74c3c)","linear-gradient(135deg,#e91e63,#9c27b0)","linear-gradient(135deg,#ff6b35,#ffd200)","linear-gradient(135deg,#1565c0,#00b4d8)","linear-gradient(135deg,#2e7d32,#66bb6a)","linear-gradient(135deg,#7b2d8b,#e91e63)"],
+ bb:["#FFD43B","#F783AC","#FFA94D","#74C0FC","#8CE99A","#CC5DE8"],bt:["#5a4a00","#7d003b","#7d3500","#003d6e","#1a4d00","#3b0080"],
+ qs:[
+  {t:"What is your favorite thing to do at recess?",o:["Play alone and try to be the very best","Play with just one really good best friend","Be silly and goof around with a huge group","Build or organize something really cool","Try something completely brand new today","Make absolutely sure everyone gets included"]},
+  {t:"How do you like to learn best?",o:["By myself so I can figure it all out","Working closely one on one with a partner","In a fun loud and energetic big group","With very clear steps and a good solid plan","By trying a completely brand new approach","By helping the whole class learn together"]},
+  {t:"If you win a game, you...",o:["Celebrate big — I totally knew I would win","Share the win with your very best friend","Get everyone laughing and cheering loudly","Write down your entire winning strategy","Challenge yourself right away with something harder","Make sure every person on the team feels great"]},
+  {t:"Pick your dream school project!",o:["A solo science experiment I designed myself","An art project done with my best friend","A big silly and super fun class skit or show","A very detailed and carefully organized report","Invent something that has truly never existed before","Plan a big class event that everyone will enjoy"]},
+  {t:"What do you do when someone is feeling sad?",o:["Tell them exactly how to fix it right away","Sit with them very quietly and really listen","Make them laugh with a really really good joke","Make a very careful step-by-step plan to help","Suggest a fun completely new activity to try","Bring the whole entire friend group back together"]},
+  {t:"What is your biggest dream in life?",o:["Be number one at something truly amazing","Find one true best friend to keep for life","Make the whole entire world laugh and smile","Build or create something that really matters","Go on adventures that nobody has ever done before","Bring people together and help create peace"]}
+ ]}
+];
+
+const NUM_DESC={"1":"Number 1 people are natural born leaders. You are brave, confident, and love being first at everything. You always go for it and never give up no matter how hard it gets. The whole world should watch out because you are going straight to the very top!","2":"Number 2 people are the best friends in the entire world. You are kind, caring, and always there when someone really needs you. You make everyone around you feel loved and completely safe. The world is such a better place because of you!","3":"Number 3 people are super creative and incredibly fun. You love making people laugh, telling great stories, and coming up with the wildest ideas. You are the life of every single party and everyone absolutely loves being around your amazing energy!","4":"Number 4 people are super organized and completely dependable. You love having a solid plan, doing things the right way, and working really really hard. People always trust you to get things done and you never let a single person down!","5":"Number 5 people are adventurous and always love trying new things. You get excited so easily and always want the next big exciting challenge. You are fearless, curious, and totally ready to explore absolutely anywhere the world takes you!","6":"Number 6 people are warm, caring, and natural helpers. You love taking care of your friends and family and making sure every single person is happy. You are the glue that holds every group together — kind, giving, and completely amazing!"};
+
+// State: shuffledQs holds the pre-shuffled questions for the current quiz attempt
+let S={screen:"home",quiz:null,q:0,shuffledQs:[],votes:[],result:null};
+let titleTaps=0,tapTimer=null;
+const sessionPlays={};
+
+async function loadStats(){try{const r=await window.storage.get("quizStatsV12",true);return r?JSON.parse(r.value):{};}catch(e){return {};}}
+async function saveStats(s){try{await window.storage.set("quizStatsV12",JSON.stringify(s),true);}catch(e){}}
+async function logPlay(id){sessionPlays[id]=(sessionPlays[id]||0)+1;const st=await loadStats();if(!st[id])st[id]={plays:0,repeats:0};st[id].plays++;if(sessionPlays[id]>1)st[id].repeats++;await saveStats(st);}
+
+// Tally: votes is an array of resultIdx values (one per question)
+function tallyVotes(qz,votes){
+  const v=new Array(qz.res.length).fill(0);
+  votes.forEach(idx=>{if(idx>=0&&idx<v.length)v[idx]++;});
+  return v.indexOf(Math.max(...v));
+}
+
+function render(){
+  const app=document.getElementById("app");
+  if(S.screen==="home")app.innerHTML=homeHTML();
+  else if(S.screen==="quiz")app.innerHTML=quizHTML();
+  else if(S.screen==="loading")app.innerHTML=loadHTML();
+  else if(S.screen==="result")app.innerHTML=resHTML();
+  else if(S.screen==="dash"){renderDash();return;}
+  bind();
+}
+
+function homeHTML(){
+  return`<div style="max-width:820px;margin:0 auto;text-align:center">
+    <h1 id="ttap" style="font-family:${F};font-weight:700;font-size:clamp(2.2rem,7vw,3.8rem);color:#fff;text-shadow:3px 4px 0 rgba(0,0,0,.2);margin-bottom:10px;cursor:pointer;user-select:none;padding-top:4px">The Quiz About You!</h1>
+    <p style="font-size:1.25rem;color:rgba(255,255,255,.93);margin-bottom:28px;font-weight:600">Pick a quiz and discover something new about yourself.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:16px">
+      ${QZ.map((q,i)=>`
+        <button class="qb" data-id="${q.id}" style="border-radius:22px;padding:0;box-shadow:0 8px 26px rgba(0,0,0,.25);animation:pop .4s ease ${i*.06}s both;border:none;overflow:hidden;min-height:175px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;background:#333">
+          <div style="position:absolute;inset:0;background-image:url('${svgBg(CARD_ART[q.art])}');background-size:cover;background-position:center"></div>
+          <div style="position:absolute;inset:0;background:${q.hdr};opacity:.45"></div>
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 30%,rgba(0,0,0,.65))"></div>
+          <div style="position:relative;z-index:1;padding:14px 14px 16px;text-align:left">
+            <div style="display:inline-block;background:rgba(255,255,255,.2);backdrop-filter:blur(4px);border-radius:7px;padding:2px 10px;font-size:.68rem;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:6px">${q.badge}</div>
+            <div style="font-family:${F};font-size:1rem;font-weight:700;color:#fff;line-height:1.3;text-shadow:1px 2px 5px rgba(0,0,0,.55)">${q.title}</div>
+          </div>
+        </button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function quizHTML(){
+  const qz=S.quiz;
+  const sq=S.shuffledQs[S.q]; // {t, displayOpts:[{text,resultIdx}]}
+  const pct=Math.round(((S.q+1)/qz.qs.length)*100);
+  return`<div style="max-width:660px;margin:0 auto">
+    <button id="bk" style="background:rgba(255,255,255,.88);border:none;border-radius:14px;padding:10px 22px;cursor:pointer;font-size:1.05rem;color:#555;font-family:${F};font-weight:600;margin-bottom:16px;box-shadow:0 3px 12px rgba(0,0,0,.1)">Back to Quizzes</button>
+    <div style="border-radius:20px;overflow:hidden;margin-bottom:18px;box-shadow:0 5px 18px rgba(0,0,0,.2);position:relative;height:90px;background:#333">
+      <div style="position:absolute;inset:0;background-image:url('${svgBg(CARD_ART[qz.art])}');background-size:cover;background-position:center"></div>
+      <div style="position:absolute;inset:0;background:${qz.hdr};opacity:.6"></div>
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.4),transparent)"></div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 22px">
+        <div>
+          <div style="font-size:.66rem;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:2px;margin-bottom:3px">${qz.badge}</div>
+          <div style="font-family:${F};font-weight:700;color:#fff;font-size:1.2rem;text-shadow:1px 2px 4px rgba(0,0,0,.35)">${qz.title}</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;font-size:1rem;color:rgba(255,255,255,.93);font-weight:600;margin-bottom:8px">
+        <span>Question ${S.q+1} of ${qz.qs.length}</span><span>${pct}% complete</span>
+      </div>
+      <div style="height:13px;background:rgba(255,255,255,.28);border-radius:99px;overflow:hidden">
+        <div style="height:100%;background:#fff;border-radius:99px;width:${pct}%;transition:width .4s"></div>
+      </div>
+    </div>
+    <div style="background:#fff;border-radius:20px;padding:24px 20px;margin-bottom:16px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.09);animation:fadeUp .3s ease">
+      <p style="font-family:${F};font-weight:600;font-size:clamp(1.25rem,4vw,1.6rem);color:#222;line-height:1.4">${sq.t}</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+      ${sq.displayOpts.map((opt,i)=>`
+        <button class="ab" data-ridx="${opt.resultIdx}" style="border-radius:18px;padding:0;box-shadow:0 5px 16px rgba(0,0,0,.18);animation:pop .3s ease ${i*.05}s both;border:3px solid rgba(255,255,255,.45);text-align:left;position:relative;overflow:hidden;min-height:105px;background:#333">
+          <div style="position:absolute;inset:0;background-image:url('${svgBg(BTN_ART[i%6])}');background-size:cover;background-position:center"></div>
+          <div style="position:absolute;inset:0;background:${qz.bb[i%qz.bb.length]};opacity:.7"></div>
+          <div style="position:relative;z-index:1;padding:16px 14px;font-family:${F};font-size:1.05rem;font-weight:700;color:${qz.bt[i%qz.bt.length]};line-height:1.4">${opt.text}</div>
+        </button>`).join("")}
+    </div>
+  </div>`;
+}
+
+const LM=["Thinking really hard...","Checking the results...","Almost there...","Finding your perfect match...","Just a few more seconds...","Getting your result ready..."];
+function loadHTML(){return`<div style="text-align:center;padding:70px 20px"><div class="spinner"></div><h2 id="lm" style="font-family:${F};font-weight:700;font-size:1.9rem;color:#fff;text-shadow:2px 3px 0 rgba(0,0,0,.15)">${LM[0]}</h2></div>`;}
+
+function resHTML(){
+  const r=S.result,qz=S.quiz;
+  const wi=qz.res.indexOf(r.name);
+  const resBg=wi>=0&&qz.rc[wi]?qz.rc[wi]:qz.hdr;
+  return`<div style="max-width:520px;margin:0 auto;text-align:center;animation:fadeUp .5s ease">
+    <div style="border-radius:26px;overflow:hidden;box-shadow:0 14px 48px rgba(0,0,0,.25);margin-bottom:22px;background:#222">
+      <div style="height:250px;position:relative">
+        <div style="position:absolute;inset:0;background-image:url('${svgBg(CARD_ART[qz.art])}');background-size:cover;background-position:center"></div>
+        <div style="position:absolute;inset:0;background:${resBg};opacity:.75"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 20%,rgba(0,0,0,.8))"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;padding:20px 24px;text-align:left">
+          <div style="display:inline-block;background:${qz.hdr};border-radius:8px;padding:3px 12px;font-size:.72rem;font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:8px">${qz.badge}</div>
+          <h1 style="font-family:${F};font-weight:700;font-size:clamp(1.9rem,6vw,2.7rem);color:#fff;line-height:1.2;text-shadow:1px 2px 8px rgba(0,0,0,.5)">You are ${r.name}!</h1>
+        </div>
+      </div>
+      <div style="background:#fff;padding:26px 24px">
+        <p style="font-family:${F};font-size:1.15rem;color:#444;line-height:1.8;font-weight:500">${r.desc}</p>
+      </div>
+    </div>
+    <button id="hb" style="background:${qz.hdr};border:none;border-radius:18px;padding:16px 40px;cursor:pointer;font-family:${F};font-size:1.4rem;font-weight:700;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.2);transition:transform .15s">Try Another Quiz</button>
+  </div>`;
+}
+
+async function renderDash(){
+  const app=document.getElementById("app");
+  app.innerHTML=`<div style="max-width:680px;margin:0 auto;animation:fadeUp .4s ease">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+      <div><h2 style="font-family:${F};font-weight:700;font-size:2rem;color:#fff;text-shadow:2px 3px 0 rgba(0,0,0,.15)">Quiz Analytics</h2><p style="color:rgba(255,255,255,.85);font-size:1rem;font-weight:600">Live usage across all players</p></div>
+      <button id="dbk" style="background:rgba(255,255,255,.88);border:none;border-radius:14px;padding:10px 22px;cursor:pointer;font-size:1.05rem;color:#555;font-family:${F};font-weight:600;box-shadow:0 3px 12px rgba(0,0,0,.1)">Back</button>
+    </div>
+    <div id="dc" style="color:#fff;font-family:${F};font-size:1.1rem">Loading stats...</div>
+  </div>`;
+  document.getElementById("dbk").addEventListener("click",()=>{S.screen="home";render();});
+  const stats=await loadStats();
+  const ids=QZ.map(q=>q.id);
+  const totalPlays=ids.reduce((s,id)=>s+(stats[id]?.plays||0),0);
+  const totalRepeats=ids.reduce((s,id)=>s+(stats[id]?.repeats||0),0);
+  const sorted=[...QZ].sort((a,b)=>(stats[b.id]?.plays||0)-(stats[a.id]?.plays||0));
+  const maxP=Math.max(...ids.map(id=>stats[id]?.plays||0),1);
+  document.getElementById("dc").innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px">
+      <div style="background:rgba(255,255,255,.18);border-radius:18px;padding:18px 14px;text-align:center;border:2px solid rgba(255,255,255,.28)"><div style="font-size:2.4rem;font-weight:700">${totalPlays}</div><div style="font-size:.9rem;color:rgba(255,255,255,.8);margin-top:3px">Total Plays</div></div>
+      <div style="background:rgba(255,255,255,.18);border-radius:18px;padding:18px 14px;text-align:center;border:2px solid rgba(255,255,255,.28)"><div style="font-size:2.4rem;font-weight:700">${totalRepeats}</div><div style="font-size:.9rem;color:rgba(255,255,255,.8);margin-top:3px">Repeat Plays</div></div>
+      <div style="background:rgba(255,255,255,.18);border-radius:18px;padding:18px 14px;text-align:center;border:2px solid rgba(255,255,255,.28)"><div style="font-size:.95rem;font-weight:700;margin-top:6px;line-height:1.3">${totalPlays>0?sorted[0].title:"No data yet"}</div><div style="font-size:.9rem;color:rgba(255,255,255,.8);margin-top:3px">Most Popular</div></div>
+    </div>
+    <div style="background:rgba(255,255,255,.14);border-radius:18px;padding:20px 18px;border:2px solid rgba(255,255,255,.22)">
+      <div style="font-size:.75rem;color:rgba(255,255,255,.7);letter-spacing:2px;font-weight:700;margin-bottom:16px">PLAYS PER QUIZ</div>
+      ${sorted.map(q=>{const plays=stats[q.id]?.plays||0,rep=stats[q.id]?.repeats||0;const pct=Math.round((plays/maxP)*100);return`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:1rem;font-weight:600">${q.title}</span><span style="font-size:.88rem;color:rgba(255,255,255,.8);margin-left:8px;white-space:nowrap">${plays} plays — ${rep} repeats</span></div><div style="height:20px;background:rgba(255,255,255,.16);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${q.hdr};border-radius:99px;transition:width .8s;min-width:${plays>0?"8px":"0"}"></div></div></div>`;}).join("")}
+      ${totalPlays===0?`<div style="text-align:center;color:rgba(255,255,255,.55);padding:20px 0">No plays recorded yet!</div>`:""}
+    </div>`;
+}
+
+let lmi=null;
+function startLoad(){let i=0;lmi=setInterval(()=>{i=(i+1)%LM.length;const el=document.getElementById("lm");if(el)el.textContent=LM[i];},1600);}
+
+async function getResult(){
+  const qz=S.quiz;
+  const wi=tallyVotes(qz,S.votes);
+  const wn=qz.res[wi];
+  // Build a readable answer list using the original question text + chosen answer text
+  const qa=S.shuffledQs.map((sq,i)=>{
+    const chosen=sq.displayOpts.find(o=>o.resultIdx===S.votes[i]);
+    return`Q: ${sq.t}\nA: ${chosen?chosen.text:"(no answer)"}`;
+  }).join("\n\n");
+  await logPlay(qz.id);
+  if(qz.id==="number"){if(lmi)clearInterval(lmi);S.result={name:wn,desc:NUM_DESC[wn]};S.screen="result";render();return;}
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:300,messages:[{role:"user",content:`You are a fun quiz host for 3rd graders age 8-9. The quiz is "${qz.title}" and this child's result is: ${wn}\n\nTheir answers:\n${qa}\n\nWrite exactly 3 short enthusiastic sentences for a 3rd grader explaining why they are ${wn}. Mention one or two of their specific answers. Use simple words and be very positive. No emoji at all.\n\nReply with ONLY the 3 sentences, nothing else.`}]})});
+    const data=await res.json();
+    if(lmi)clearInterval(lmi);S.result={name:wn,desc:data.content[0].text.trim()};S.screen="result";render();
+  }catch(e){
+    if(lmi)clearInterval(lmi);
+    const fb={color:`You are ${wn} through and through! Your answers show a personality that is bold, bright, and full of life just like this amazing color. Keep shining and being your wonderful self!`,disney:`You are ${wn}! Everything about your answers shows you have the heart, spirit, and courage of this legendary character. Keep being the incredible person you already are!`,princess:`You are ${wn}! Your answers prove you have the bravery, grace, and heart of this amazing princess. You were absolutely born to be this wonderful!`,animal:`You are a ${wn}! Your answers show you have all the incredible qualities of this powerful animal. Keep being your strong, unique, and awesome self!`,food:`You are ${wn}! Your personality is a perfect match for this beloved favorite. Everyone loves you just as much as they love this amazing treat!`,celeb:`You are ${wn}! Your talent, energy, and heart all line up perfectly with this incredible star. Get ready because your spotlight moment is coming soon!`,hero:`You are ${wn}! Your answers prove you have the powers, the values, and the heroic spirit of this legendary hero. The world needs people exactly like you!`,number:`You are a ${wn}! Your answers show your amazing personality in the most perfect way. Keep being the absolutely incredible person that you truly are!`};
+    S.result={name:wn,desc:fb[qz.id]||`You are ${wn} and it suits you perfectly!`};S.screen="result";render();
+  }
+}
+
+function bind(){
+  document.querySelectorAll(".qb").forEach(b=>b.addEventListener("click",()=>{
+    const qz=QZ.find(q=>q.id===b.dataset.id);
+    S={screen:"quiz",quiz:qz,q:0,shuffledQs:buildShuffledQuestions(qz),votes:[],result:null};
+    render();
+  }));
+  document.querySelectorAll(".ab").forEach(b=>b.addEventListener("click",()=>{
+    const resultIdx=parseInt(b.dataset.ridx);
+    S.votes=[...S.votes,resultIdx];
+    if(S.q<S.quiz.qs.length-1){S.q++;render();}
+    else{S.screen="loading";render();startLoad();getResult();}
+  }));
+  const bk=document.getElementById("bk");if(bk)bk.addEventListener("click",()=>{S.screen="home";render();});
+  const hb=document.getElementById("hb");if(hb){hb.addEventListener("click",()=>{S.screen="home";render();});hb.addEventListener("mouseover",()=>{hb.style.transform="translateY(-4px) scale(1.04)";});hb.addEventListener("mouseout",()=>{hb.style.transform="none";});}
+  const tt=document.getElementById("ttap");if(tt){tt.addEventListener("click",()=>{titleTaps++;clearTimeout(tapTimer);if(titleTaps>=5){titleTaps=0;S.screen="dash";render();}else tapTimer=setTimeout(()=>{titleTaps=0;},2000);});}
+}
+render();
+</script>
