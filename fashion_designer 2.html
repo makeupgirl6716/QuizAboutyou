@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✨ Fashion Studio ✨</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#FF6BB5;--purple:#7C3AED;--purpleD:#5B21B6;
+    --yellow:#FBBF24;--text:#2D1654;--textMid:#4C2A85;
+    --bg:#F3E8FF;--border:#C4B5FD;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Fredoka',sans-serif;background:var(--bg);overflow-x:hidden;}
+  .screen{display:none;}
+  .screen.active{display:flex;flex-direction:column;min-height:100vh;}
+  #pickScreen{align-items:center;justify-content:center;padding:2rem 1.5rem;text-align:center;
+    background:radial-gradient(ellipse at 30% 20%,#FFE4F5 0%,#EDE9FE 50%,#DBEAFE 100%);}
+  .pick-title{font-size:clamp(2rem,6vw,3.2rem);font-weight:700;color:var(--text);margin-bottom:.25rem;}
+  .pick-title em{color:#BE185D;font-style:normal;}
+  .pick-sub{font-size:1.1rem;color:var(--textMid);font-weight:600;margin-bottom:2rem;}
+  .pick-cards{display:flex;gap:1.6rem;flex-wrap:wrap;justify-content:center;}
+  .pick-card{background:#fff;border-radius:24px;padding:1.2rem 1rem 1.4rem;
+    box-shadow:0 6px 28px rgba(109,40,217,.18);cursor:pointer;width:165px;
+    border:3px solid #DDD6FE;transition:transform .22s,border-color .22s,box-shadow .22s;
+    display:flex;flex-direction:column;align-items:center;gap:.7rem;}
+  .pick-card:hover{transform:translateY(-8px) scale(1.04);border-color:var(--purple);box-shadow:0 16px 40px rgba(109,40,217,.28);}
+  .pick-card svg{width:115px;height:168px;filter:drop-shadow(0 4px 8px rgba(109,40,217,.18));}
+  .pick-card h2{font-size:1.2rem;font-weight:700;color:var(--text);}
+  #studioScreen{background:var(--bg);}
+  .s-hdr{background:linear-gradient(135deg,#6D28D9,#BE185D);padding:.8rem 1.1rem;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 4px 16px rgba(109,40,217,.35);gap:.6rem;flex-wrap:wrap;}
+  .s-hdr h1{color:#fff;font-size:1.35rem;font-weight:700;white-space:nowrap;}
+  .hbtns{display:flex;gap:.5rem;}
+  .btn-y{background:var(--yellow);color:#1A0A2E;border:none;border-radius:50px;
+    padding:.46rem 1.1rem;font-family:'Fredoka',sans-serif;font-size:.95rem;font-weight:700;
+    cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 10px rgba(251,191,36,.4);}
+  .btn-y:hover{transform:scale(1.07);}
+  .btn-g{background:rgba(255,255,255,.2);color:#fff;border:2px solid rgba(255,255,255,.55);
+    border-radius:50px;padding:.42rem .95rem;font-family:'Fredoka',sans-serif;
+    font-size:.88rem;font-weight:700;cursor:pointer;transition:background .15s;}
+  .btn-g:hover{background:rgba(255,255,255,.35);}
+  .s-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+  .model-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:1.2rem;background:linear-gradient(160deg,#F5F0FF 0%,#EDE9FE 100%);}
+  .model-stage{position:relative;width:200px;height:320px;}
+  .model-stage svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 8px 20px rgba(109,40,217,.22));}
+  .m-hint{margin-top:.75rem;font-size:.82rem;font-weight:600;color:#3B0764;text-align:center;
+    background:rgba(255,255,255,.85);border-radius:20px;padding:.3rem .85rem;border:1.5px solid #C4B5FD;}
+  .cat-panel{width:268px;background:#fff;border-left:3px solid #C4B5FD;
+    overflow-y:auto;padding:.75rem;display:flex;flex-direction:column;gap:.42rem;}
+  .cat-panel::-webkit-scrollbar{width:5px;}
+  .cat-panel::-webkit-scrollbar-thumb{background:#A78BFA;border-radius:3px;}
+  .cat-row{background:#EDE9FE;border-radius:12px;padding:.55rem .75rem;
+    border:2px solid #C4B5FD;transition:border-color .15s;}
+  .cat-row:hover{border-color:#7C3AED;}
+  .cat-lbl{font-size:.73rem;font-weight:700;color:#3B0764;
+    text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem;}
+  .cat-ctrl{display:flex;align-items:center;gap:.4rem;}
+  .arr{background:#7C3AED;color:#fff;border:2px solid #5B21B6;border-radius:50%;
+    width:30px;height:30px;flex-shrink:0;font-size:1rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-weight:700;
+    transition:background .14s,transform .1s;box-shadow:0 2px 6px rgba(109,40,217,.4);}
+  .arr:hover{background:#5B21B6;transform:scale(1.18);}
+  .arr:active{transform:scale(.95);}
+  .sw{width:20px;height:20px;border-radius:50%;flex-shrink:0;
+    border:2.5px solid rgba(0,0,0,.2);box-shadow:0 1px 3px rgba(0,0,0,.15);}
+  .on{flex:1;font-size:.9rem;font-weight:700;color:#1E0A3C;
+    text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #photoScreen{align-items:center;padding:1.1rem .9rem;gap:.8rem;
+    background:linear-gradient(160deg,#F5F0FF,#EDE9FE);}
+  #photoScreen h1{font-size:1.8rem;font-weight:700;color:var(--text);}
+  .bg-strip{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;max-width:500px;}
+  .bg-btn{padding:.34rem .82rem;border-radius:50px;border:2.5px solid #7C3AED;
+    background:#EDE9FE;color:#3B0764;font-family:'Fredoka',sans-serif;
+    font-size:.85rem;font-weight:700;cursor:pointer;transition:all .14s;}
+  .bg-btn:hover,.bg-btn.active{background:#7C3AED;color:#fff;border-color:#5B21B6;}
+  .photo-frame{position:relative;width:min(380px,92vw);height:min(460px,82vw);
+    border-radius:22px;overflow:hidden;box-shadow:0 12px 48px rgba(109,40,217,.3);}
+  .photo-bg-layer{position:absolute;inset:0;}
+  .photo-bg-layer svg{width:100%;height:100%;}
+  .photo-char{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:190px;height:304px;}
+  .photo-char svg{width:100%;height:100%;overflow:visible;}
+  .p-actions{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center;}
+  .btn-out{background:#EDE9FE;color:#3B0764;border:2px solid #A78BFA;border-radius:50px;
+    padding:.5rem 1.3rem;font-family:'Fredoka',sans-serif;font-size:.95rem;font-weight:700;
+    cursor:pointer;transition:background .15s;}
+  .btn-out:hover{background:#DDD6FE;}
+  .flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999;transition:opacity .12s;}
+  .flash.go{opacity:1;}
+  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1.2) rotate(200deg)}}
+  .sp{position:absolute;pointer-events:none;font-size:1.4rem;animation:sparkle .9s ease both;}
+  @media(max-width:560px){
+    .s-body{flex-direction:column;}
+    .cat-panel{width:100%;border-left:none;border-top:3px solid #C4B5FD;max-height:42vh;}
+    .model-stage{width:155px;height:248px;}
+  }
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<div class="screen active" id="pickScreen">
+  <h1 class="pick-title">✨ <em>Fashion</em> Studio ✨</h1>
+  <p class="pick-sub">Who's getting a makeover today?</p>
+  <div class="pick-cards">
+    <div class="pick-card" onclick="startGame('girl')">
+      <svg viewBox="0 0 110 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="psg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FDDBB4"/><stop offset="100%" stop-color="#F0C490"/></linearGradient>
+          <linearGradient id="phg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C0693A"/><stop offset="100%" stop-color="#8B4513"/></linearGradient>
+          <linearGradient id="pdg" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#FF9EE0"/><stop offset="100%" stop-color="#FF6BB5"/></linearGradient>
+        </defs>
+        <ellipse cx="32" cy="110" rx="8" ry="28" fill="url(#phg)"/>
+        <ellipse cx="78" cy="110" rx="8" ry="28" fill="url(#phg)"/>
+        <path d="M27 38 Q29 12 55 10 Q81 12 83 38" fill="url(#phg)"/>
+        <path d="M28 70 Q18 100 20 145 L90 145 Q92 100 82 70 Z" fill="url(#pdg)"/>
+        <ellipse cx="55" cy="36" rx="26" ry="28" fill="url(#psg)"/>
+        <ellipse cx="38" cy="144" rx="10" ry="6" fill="#FF6BB5"/>
+        <ellipse cx="72" cy="144" rx="10" ry="6" fill="#FF6BB5"/>
+        <circle cx="46" cy="34" r="4" fill="#3D2B1F"/>
+        <circle cx="64" cy="34" r="4" fill="#3D2B1F"/>
+        <circle cx="47" cy="33" r="1.5" fill="#fff"/>
+        <path d="M40 24 Q38 18 43 17" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+        <path d="M62 24 Q68 19 70 20" stroke="#8B4513" stroke-width="1.5" fill="none"/>
+        <path d="M49 44 Q55 49 61 44" stroke="#E05B7F" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="42" cy="40" rx="5" ry="3" fill="#FFB3C6" opacity=".5"/>
+        <ellipse cx="68" cy="40" rx="5" ry="3" fill="#FFB3C6" opacity=".5"/>
+        <path d="M79 20 Q83 14 87 20 Q83 26 79 20Z" fill="#FF6BB5"/>
+        <circle cx="83" cy="20" r="4" fill="#FF6BB5"/>
+      </svg>
+      <h2>✨ Girl</h2>
+    </div>
+    <div class="pick-card" onclick="startGame('boy')">
+      <svg viewBox="0 0 110 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="psb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FDDBB4"/><stop offset="100%" stop-color="#F0C490"/></linearGradient>
+          <linearGradient id="phb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5C3A1E"/><stop offset="100%" stop-color="#3D2B1F"/></linearGradient>
+          <linearGradient id="pshb" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7CC8FF"/><stop offset="100%" stop-color="#3B9EFF"/></linearGradient>
+          <linearGradient id="ppb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4B5563"/><stop offset="100%" stop-color="#374151"/></linearGradient>
+        </defs>
+        <path d="M26 75 Q16 106 18 148 L92 148 Q94 106 84 75 Z" fill="url(#pshb)"/>
+        <rect x="30" y="116" width="20" height="38" rx="8" fill="url(#ppb)"/>
+        <rect x="60" y="116" width="20" height="38" rx="8" fill="url(#ppb)"/>
+        <ellipse cx="40" cy="152" rx="12" ry="6" fill="#1F2937"/>
+        <ellipse cx="70" cy="152" rx="12" ry="6" fill="#1F2937"/>
+        <ellipse cx="55" cy="36" rx="26" ry="28" fill="url(#psb)"/>
+        <rect x="29" y="10" width="52" height="16" rx="8" fill="url(#phb)"/>
+        <ellipse cx="55" cy="14" rx="26" ry="9" fill="url(#phb)"/>
+        <circle cx="45" cy="36" r="4.5" fill="#3D2B1F"/>
+        <circle cx="65" cy="36" r="4.5" fill="#3D2B1F"/>
+        <circle cx="46" cy="35" r="1.5" fill="#fff"/>
+        <path d="M38 26 Q45 21 52 26" stroke="#3D2B1F" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M58 26 Q65 21 72 26" stroke="#3D2B1F" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M49 46 Q55 51 61 46" stroke="#C2845A" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="28" cy="98" rx="9" ry="26" fill="url(#psb)"/>
+        <ellipse cx="82" cy="98" rx="9" ry="26" fill="url(#psb)"/>
+      </svg>
+      <h2>🏆 Boy</h2>
+    </div>
+  </div>
+</div>
+<div class="screen" id="studioScreen">
+  <div class="s-hdr">
+    <h1>✨ Fashion Studio</h1>
+    <div class="hbtns">
+      <button class="btn-g" onclick="goPhoto()">📸 Take Photo!</button>
+      <button class="btn-g" onclick="restart()">🔄 New Model</button>
+    </div>
+  </div>
+  <div class="s-body">
+    <div class="model-area">
+      <div class="model-stage" id="modelStage"></div>
+      <p class="m-hint">Use ← → arrows to change your outfit!</p>
+    </div>
+    <div class="cat-panel" id="catPanel"></div>
+  </div>
+</div>
+<div class="screen" id="photoScreen">
+  <h1>📸 Pick Your Scene!</h1>
+  <div class="bg-strip" id="bgStrip"></div>
+  <div class="photo-frame" id="photoFrame">
+    <div class="photo-bg-layer" id="photoBg"></div>
+    <div class="photo-char" id="photoChar"></div>
+  </div>
+  <div class="p-actions">
+    <button class="btn-out" onclick="goStudio()">← Edit Look</button>
+    <button class="btn-y" onclick="snap()">📸 Snap It!</button>
+    <button class="btn-out" onclick="restart()">🔄 Start Over</button>
+  </div>
+</div>
+<script>
+const SKIN='#FDDBB4',SKIND='#E8A87C',SKINDD='#C97840';
+const HAIR_GIRL=[
+  {name:'Long Brown',c:'#A0522D',c2:'#6B3410',style:'long'},
+  {name:'Long Blonde',c:'#FBBF24',c2:'#B45309',style:'long'},
+  {name:'Long Black',c:'#374151',c2:'#111827',style:'long'},
+  {name:'Long Red',c:'#DC2626',c2:'#991B1B',style:'long'},
+  {name:'Curly Brown',c:'#92400E',c2:'#78350F',style:'curly'},
+  {name:'Curly Blonde',c:'#FDE68A',c2:'#D97706',style:'curly'},
+  {name:'Short Pink',c:'#F472B6',c2:'#BE185D',style:'short'},
+  {name:'Short Purple',c:'#A855F7',c2:'#6D28D9',style:'short'},
+];
+const HAIR_BOY=[
+  {name:'Brown Short',c:'#A0522D',c2:'#6B3410',style:'boyshort'},
+  {name:'Black Short',c:'#374151',c2:'#111827',style:'boyshort'},
+  {name:'Blonde',c:'#FBBF24',c2:'#B45309',style:'boyshort'},
+  {name:'Red Short',c:'#DC2626',c2:'#991B1B',style:'boyshort'},
+  {name:'Dark Fade',c:'#374151',c2:'#1F2937',style:'fade'},
+  {name:'Curly Brown',c:'#92400E',c2:'#78350F',style:'boycurly'},
+  {name:'Blue Tips',c:'#60A5FA',c2:'#2563EB',style:'tips'},
+  {name:'Green Tips',c:'#34D399',c2:'#059669',style:'tips'},
+];
+const TOP_GIRL=[
+  {name:'Pink Tee',c:'#FF9ECC',c2:'#DB2777'},
+  {name:'Blue Blouse',c:'#93C5FD',c2:'#2563EB'},
+  {name:'Yellow Crop',c:'#FDE68A',c2:'#D97706'},
+  {name:'Mint Hoodie',c:'#6EE7B7',c2:'#059669'},
+  {name:'Purple Tank',c:'#C084FC',c2:'#7C3AED'},
+  {name:'Red Top',c:'#FCA5A5',c2:'#DC2626'},
+  {name:'White Blouse',c:'#F9FAFB',c2:'#9CA3AF'},
+  {name:'Orange Tee',c:'#FDBA74',c2:'#EA580C'},
+];
+const TOP_BOY=[
+  {name:'Blue Tee',c:'#93C5FD',c2:'#2563EB'},
+  {name:'Red Tee',c:'#FCA5A5',c2:'#DC2626'},
+  {name:'Green Tee',c:'#6EE7B7',c2:'#059669'},
+  {name:'Yellow Hoodie',c:'#FDE68A',c2:'#D97706'},
+  {name:'Purple Shirt',c:'#C084FC',c2:'#7C3AED'},
+  {name:'White Tee',c:'#F9FAFB',c2:'#9CA3AF'},
+  {name:'Orange Shirt',c:'#FDBA74',c2:'#EA580C'},
+  {name:'Black Tee',c:'#6B7280',c2:'#1F2937'},
+];
+const BOT_GIRL=[
+  {name:'Pink Skirt',c:'#FFB3D9',c2:'#DB2777',style:'skirt'},
+  {name:'Blue Jeans',c:'#93C5FD',c2:'#2563EB',style:'pants'},
+  {name:'Yellow Skirt',c:'#FDE68A',c2:'#D97706',style:'skirt'},
+  {name:'Plaid Skirt',c:'#DDD6FE',c2:'#7C3AED',style:'skirt'},
+  {name:'Mint Shorts',c:'#6EE7B7',c2:'#059669',style:'shorts'},
+  {name:'Black Skirt',c:'#6B7280',c2:'#1F2937',style:'skirt'},
+  {name:'Floral Skirt',c:'#FCA5A5',c2:'#DC2626',style:'skirt'},
+  {name:'Denim Skirt',c:'#BFDBFE',c2:'#3B82F6',style:'skirt'},
+];
+const BOT_BOY=[
+  {name:'Dark Jeans',c:'#6B7280',c2:'#1F2937',style:'pants'},
+  {name:'Blue Jeans',c:'#93C5FD',c2:'#2563EB',style:'pants'},
+  {name:'Khaki Pants',c:'#D4A76A',c2:'#92400E',style:'pants'},
+  {name:'Green Shorts',c:'#6EE7B7',c2:'#059669',style:'shorts'},
+  {name:'Gray Sweats',c:'#9CA3AF',c2:'#4B5563',style:'pants'},
+  {name:'Red Shorts',c:'#FCA5A5',c2:'#DC2626',style:'shorts'},
+  {name:'Camo Pants',c:'#86EFAC',c2:'#15803D',style:'pants'},
+  {name:'Black Pants',c:'#4B5563',c2:'#111827',style:'pants'},
+];
+const SHOES_GIRL=[
+  {name:'Pink Heels',c:'#FF9ECC',c2:'#DB2777',style:'heels'},
+  {name:'White Snkrs',c:'#F9FAFB',c2:'#9CA3AF',style:'sneaker'},
+  {name:'Blue Boots',c:'#93C5FD',c2:'#2563EB',style:'boot'},
+  {name:'Gold Sandals',c:'#FDE68A',c2:'#B45309',style:'sandal'},
+  {name:'Purple Flats',c:'#C084FC',c2:'#7C3AED',style:'flat'},
+  {name:'Red Pumps',c:'#FCA5A5',c2:'#DC2626',style:'heels'},
+  {name:'Mint Snkrs',c:'#6EE7B7',c2:'#059669',style:'sneaker'},
+  {name:'Black Boots',c:'#6B7280',c2:'#111827',style:'boot'},
+];
+const SHOES_BOY=[
+  {name:'White Snkrs',c:'#F9FAFB',c2:'#9CA3AF',style:'sneaker'},
+  {name:'Black Shoes',c:'#4B5563',c2:'#111827',style:'dress'},
+  {name:'Blue Snkrs',c:'#93C5FD',c2:'#2563EB',style:'sneaker'},
+  {name:'Red Kicks',c:'#FCA5A5',c2:'#DC2626',style:'sneaker'},
+  {name:'Gray Boots',c:'#9CA3AF',c2:'#4B5563',style:'boot'},
+  {name:'Brown Boots',c:'#D4A76A',c2:'#92400E',style:'boot'},
+  {name:'Green Snkrs',c:'#6EE7B7',c2:'#059669',style:'sneaker'},
+  {name:'Yellow Shoes',c:'#FDE68A',c2:'#D97706',style:'sneaker'},
+];
+const BAGS=[
+  {name:'None',c:'none'},
+  {name:'Pink Purse',c:'#FF9ECC',c2:'#DB2777',style:'purse'},
+  {name:'Blue Backpack',c:'#93C5FD',c2:'#2563EB',style:'backpack'},
+  {name:'Yellow Bag',c:'#FDE68A',c2:'#D97706',style:'purse'},
+  {name:'Mint Clutch',c:'#6EE7B7',c2:'#059669',style:'clutch'},
+  {name:'Purple Tote',c:'#C084FC',c2:'#7C3AED',style:'tote'},
+  {name:'Red Bag',c:'#FCA5A5',c2:'#DC2626',style:'purse'},
+  {name:'Brown Satchel',c:'#D4A76A',c2:'#92400E',style:'tote'},
+];
+const HATS=[
+  {name:'None',c:'none'},
+  {name:'Pink Cap',c:'#FF9ECC',c2:'#DB2777',style:'cap'},
+  {name:'Blue Beanie',c:'#93C5FD',c2:'#2563EB',style:'beanie'},
+  {name:'Yellow Hat',c:'#FDE68A',c2:'#D97706',style:'wide'},
+  {name:'Purple Crown',c:'#C084FC',c2:'#7C3AED',style:'crown'},
+  {name:'Red Cap',c:'#FCA5A5',c2:'#DC2626',style:'cap'},
+  {name:'Mint Beanie',c:'#6EE7B7',c2:'#059669',style:'beanie'},
+  {name:'Cowboy Hat',c:'#D4A76A',c2:'#92400E',style:'wide'},
+];
+const JEWELS=[
+  {name:'None',c:'none'},
+  {name:'Gold Necklace',c:'#FBBF24',c2:'#B45309',style:'necklace'},
+  {name:'Pink Earrings',c:'#FF9ECC',c2:'#DB2777',style:'earrings'},
+  {name:'Pearl Set',c:'#F9FAFB',c2:'#9CA3AF',style:'both'},
+  {name:'Blue Bracelet',c:'#93C5FD',c2:'#2563EB',style:'bracelet'},
+  {name:'Purple Ring',c:'#C084FC',c2:'#7C3AED',style:'bracelet'},
+  {name:'Heart Studs',c:'#FCA5A5',c2:'#DC2626',style:'earrings'},
+  {name:'Mint Choker',c:'#6EE7B7',c2:'#059669',style:'necklace'},
+];
+const HAIR_ITEMS=[
+  {name:'None',c:'none'},
+  {name:'Pink Bow',c:'#FF9ECC',c2:'#DB2777',style:'bow'},
+  {name:'Blue Headband',c:'#93C5FD',c2:'#2563EB',style:'headband'},
+  {name:'Yellow Bow',c:'#FDE68A',c2:'#D97706',style:'bow'},
+  {name:'Purple Clips',c:'#C084FC',c2:'#7C3AED',style:'clips'},
+  {name:'Flower Crown',c:'#FCA5A5',c2:'#DC2626',style:'flowercrown'},
+  {name:'Mint Scrunchie',c:'#6EE7B7',c2:'#059669',style:'scrunchie'},
+  {name:'Gold Tiara',c:'#FBBF24',c2:'#B45309',style:'tiara'},
+];
+const CATS=[
+  {key:'hair',label:'Hair'},
+  {key:'hiItem',label:'Hair Items'},
+  {key:'hat',label:'Hat'},
+  {key:'top',label:'Top'},
+  {key:'jewels',label:'Jewelry'},
+  {key:'bottom',label:'Bottom'},
+  {key:'bag',label:'Bag / Purse'},
+  {key:'shoes',label:'Shoes'},
+];
+const BGS=[
+  {name:'Beach Sunset',fn:bvBeach},
+  {name:'Playground',fn:bvPlayground},
+  {name:'The Mall',fn:bvMall},
+  {name:'Paris Runway',fn:bvParis},
+  {name:'Red Carpet',fn:bvRedCarpet},
+  {name:'Restaurant',fn:bvRestaurant},
+  {name:'School Hall',fn:bvSchool},
+];
+let gender='girl';
+let outfit={hair:0,hiItem:0,hat:0,top:0,jewels:0,bottom:0,bag:0,shoes:0};
+let selBg=0;
+function opts(k){
+  if(k==='hair') return gender==='girl'?HAIR_GIRL:HAIR_BOY;
+  if(k==='top') return gender==='girl'?TOP_GIRL:TOP_BOY;
+  if(k==='bottom') return gender==='girl'?BOT_GIRL:BOT_BOY;
+  if(k==='shoes') return gender==='girl'?SHOES_GIRL:SHOES_BOY;
+  if(k==='bag') return BAGS;
+  if(k==='hat') return HATS;
+  if(k==='jewels') return JEWELS;
+  if(k==='hiItem') return HAIR_ITEMS;
+  return [];
+}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function startGame(g){gender=g;outfit={hair:0,hiItem:0,hat:0,top:0,jewels:0,bottom:0,bag:0,shoes:0};buildPanel();renderChar('modelStage');showScreen('studioScreen');}
+function goPhoto(){renderChar('photoChar');buildBgStrip();applyBg(0);showScreen('photoScreen');}
+function goStudio(){showScreen('studioScreen');}
+function restart(){showScreen('pickScreen');}
+function buildPanel(){
+  const p=document.getElementById('catPanel');p.innerHTML='';
+  CATS.forEach(({key,label})=>{
+    const o=opts(key),cur=o[outfit[key]];
+    const row=document.createElement('div');row.className='cat-row';
+    const swStyle=cur.c==='none'?'background:#E5E7EB;border-style:dashed;border-color:#9CA3AF':`background:${cur.c};border-color:${cur.c2||cur.c}`;
+    row.innerHTML=`<div class="cat-lbl">${label}</div><div class="cat-ctrl">
+      <button class="arr" onclick="cycle('${key}',-1)">&#8592;</button>
+      <div class="sw" id="sw-${key}" style="${swStyle}"></div>
+      <span class="on" id="on-${key}">${cur.name}</span>
+      <button class="arr" onclick="cycle('${key}',1)">&#8594;</button>
+    </div>`;
+    p.appendChild(row);
+  });
+}
+function cycle(key,dir){
+  const o=opts(key);outfit[key]=(outfit[key]+dir+o.length)%o.length;
+  const cur=o[outfit[key]];
+  document.getElementById('on-'+key).textContent=cur.name;
+  const sw=document.getElementById('sw-'+key);
+  if(cur.c==='none'){sw.style.background='#E5E7EB';sw.style.borderStyle='dashed';sw.style.borderColor='#9CA3AF';}
+  else{sw.style.background=cur.c;sw.style.borderStyle='solid';sw.style.borderColor=cur.c2||cur.c;}
+  renderChar('modelStage');
+}
+function renderChar(cid){const wrap=document.getElementById(cid);if(!wrap)return;wrap.innerHTML=buildCharSVG();}
+function buildCharSVG(){
+  const hair=opts('hair')[outfit.hair],top=opts('top')[outfit.top],bot=opts('bottom')[outfit.bottom];
+  const shoes=opts('shoes')[outfit.shoes],bag=opts('bag')[outfit.bag],hat=opts('hat')[outfit.hat];
+  const jwl=opts('jewels')[outfit.jewels],hiItem=opts('hiItem')[outfit.hiItem];
+  const isGirl=gender==='girl';
+  let p=[];
+  p.push(`<defs>
+    <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${SKIN}"/><stop offset="100%" stop-color="${SKIND}"/></linearGradient>
+    <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${top.c}"/><stop offset="100%" stop-color="${top.c2}"/></linearGradient>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${bot.c}"/><stop offset="100%" stop-color="${bot.c2||bot.c}"/></linearGradient>
+    <linearGradient id="shg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${shoes.c}"/><stop offset="100%" stop-color="${shoes.c2||shoes.c}"/></linearGradient>
+    <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${hair.c}"/><stop offset="100%" stop-color="${hair.c2}"/></linearGradient>
+    <filter id="ds"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.16"/></filter>
+  </defs>`);
+  p.push(hairBack(hair,isGirl));
+  p.push(`<rect x="80" y="222" width="18" height="72" rx="9" fill="url(#sg)"/><rect x="102" y="222" width="18" height="72" rx="9" fill="url(#sg)"/>`);
+  p.push(drawShoes(shoes,isGirl));
+  p.push(drawBottom(bot,isGirl));
+  p.push(`<path d="M70 148 Q46 182 48 228" stroke="url(#sg)" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <path d="M130 148 Q154 182 152 228" stroke="url(#sg)" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <path d="M70 148 Q46 182 48 228" stroke="${SKINDD}" stroke-width="18" stroke-linecap="round" fill="none" opacity=".12"/>`);
+  p.push(drawTop(top,isGirl));
+  p.push(`<rect x="92" y="110" width="16" height="28" rx="8" fill="url(#sg)"/>`);
+  p.push(`<ellipse cx="100" cy="78" rx="38" ry="42" fill="url(#sg)" filter="url(#ds)"/><ellipse cx="100" cy="78" rx="38" ry="42" fill="none" stroke="${SKINDD}" stroke-width="1" opacity=".25"/>`);
+  p.push(hairFront(hair,isGirl));
+  p.push(drawFace(isGirl));
+  if(jwl.c!=='none') p.push(drawJewelry(jwl));
+  if(hat.c!=='none') p.push(drawHat(hat));
+  if(hiItem.c!=='none') p.push(drawHairItem(hiItem));
+  if(bag.c!=='none') p.push(drawBag(bag));
+  return `<svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" overflow="visible">${p.join('')}</svg>`;
+}
+function hairBack(h,isGirl){
+  const c=`fill="url(#hg)"`,cs=`stroke="${h.c2}" stroke-width="1.5"`;
+  if(!isGirl) return '';
+  if(h.style==='short') return `<ellipse cx="100" cy="50" rx="42" ry="14" ${c} ${cs}/>`;
+  if(h.style==='curly') return `<ellipse cx="62" cy="122" rx="13" ry="48" ${c} ${cs}/><ellipse cx="138" cy="122" rx="13" ry="48" ${c} ${cs}/>`;
+  return `<ellipse cx="62" cy="132" rx="11" ry="58" ${c} ${cs}/><ellipse cx="138" cy="132" rx="11" ry="58" ${c} ${cs}/>`;
+}
+function hairFront(h,isGirl){
+  const c=`fill="url(#hg)"`,cs=`stroke="${h.c2}" stroke-width="1.5"`;
+  if(isGirl){
+    if(h.style==='short') return `<path d="M62 72 Q64 38 100 34 Q136 38 138 72" ${c} ${cs}/><ellipse cx="100" cy="42" rx="40" ry="15" ${c} ${cs}/>`;
+    if(h.style==='curly') return `<path d="M62 72 Q64 38 100 34 Q136 38 138 72" ${c} ${cs}/><ellipse cx="62" cy="82" rx="13" ry="18" ${c} ${cs}/><ellipse cx="138" cy="82" rx="13" ry="18" ${c} ${cs}/>`;
+    return `<path d="M62 72 Q64 38 100 34 Q136 38 138 72" ${c} ${cs}/>`;
+  }
+  if(h.style==='boycurly') return `<path d="M64 74 Q66 42 100 38 Q134 42 136 74" ${c} ${cs}/><ellipse cx="65" cy="76" rx="10" ry="14" ${c} ${cs}/><ellipse cx="135" cy="76" rx="10" ry="14" ${c} ${cs}/>`;
+  if(h.style==='tips') return `<path d="M64 74 Q66 42 100 38 Q134 42 136 74" fill="#2D2D2D" stroke="#111" stroke-width="1.5"/><ellipse cx="72" cy="42" rx="10" ry="6" fill="${h.c}" stroke="${h.c2}" stroke-width="1"/><ellipse cx="128" cy="42" rx="10" ry="6" fill="${h.c}" stroke="${h.c2}" stroke-width="1"/>`;
+  return `<path d="M64 74 Q66 42 100 38 Q134 42 136 74" ${c} ${cs}/>`;
+}
+function drawFace(isGirl){
+  let o=`<ellipse cx="85" cy="80" rx="7" ry="8" fill="#fff"/><ellipse cx="115" cy="80" rx="7" ry="8" fill="#fff"/>
+    <circle cx="87" cy="81" r="5.5" fill="#3D2B1F"/><circle cx="117" cy="81" r="5.5" fill="#3D2B1F"/>
+    <circle cx="88" cy="79" r="2" fill="#fff"/><circle cx="118" cy="79" r="2" fill="#fff"/><circle cx="90" cy="82" r="1" fill="#fff"/>`;
+  if(isGirl){
+    o+=`<path d="M78 74 Q81 70 85 73" stroke="#3D2B1F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M82 72 Q86 68 89 71" stroke="#3D2B1F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M111 72 Q115 68 118 71" stroke="#3D2B1F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M115 73 Q119 70 122 74" stroke="#3D2B1F" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+  } else {
+    o+=`<path d="M78 72 Q85 68 92 72" stroke="#3D2B1F" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M108 72 Q115 68 122 72" stroke="#3D2B1F" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+  }
+  o+=`<ellipse cx="100" cy="92" rx="4" ry="3" fill="${SKINDD}" opacity=".55"/>`;
+  o+=isGirl?`<path d="M91 103 Q100 110 109 103" stroke="#E05B7F" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+    :`<path d="M92 103 Q100 108 108 103" stroke="#C2845A" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  o+=`<ellipse cx="76" cy="96" rx="8" ry="5" fill="#FFB3C6" opacity=".35"/><ellipse cx="124" cy="96" rx="8" ry="5" fill="#FFB3C6" opacity=".35"/>`;
+  return o;
+}
+function drawTop(t,isGirl){
+  return isGirl
+    ?`<path d="M64 140 Q54 168 58 212 L142 212 Q146 168 136 140 Q118 126 100 124 Q82 126 64 140Z" fill="url(#tg)" stroke="${t.c2}" stroke-width="1.5"/><path d="M64 140 Q100 150 136 140" stroke="${t.c2}" stroke-width="1" fill="none" opacity=".4"/>`
+    :`<path d="M62 140 Q50 172 54 218 L146 218 Q150 172 138 140 Q118 124 100 122 Q82 124 62 140Z" fill="url(#tg)" stroke="${t.c2}" stroke-width="1.5"/><path d="M62 140 Q100 152 138 140" stroke="${t.c2}" stroke-width="1" fill="none" opacity=".4"/>`;
+}
+function drawBottom(b,isGirl){
+  if(isGirl){
+    if(b.style==='skirt') return `<path d="M58 208 Q46 258 54 295 L146 295 Q154 258 142 208Z" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/><path d="M60 222 Q100 230 140 222" stroke="${b.c2}" stroke-width="1" fill="none" opacity=".35"/>`;
+    if(b.style==='shorts') return `<path d="M60 208 L60 250 Q100 257 140 250 L140 208Z" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/><line x1="100" y1="208" x2="100" y2="252" stroke="${b.c2}" stroke-width="1.5" opacity=".5"/>`;
+    return `<rect x="60" y="208" width="36" height="88" rx="10" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/><rect x="104" y="208" width="36" height="88" rx="10" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/>`;
+  }
+  if(b.style==='shorts') return `<path d="M58 212 L58 258 Q100 266 142 258 L142 212Z" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/><line x1="100" y1="212" x2="100" y2="260" stroke="${b.c2}" stroke-width="1.5" opacity=".5"/>`;
+  return `<rect x="58" y="210" width="38" height="90" rx="10" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/><rect x="104" y="210" width="38" height="90" rx="10" fill="url(#bg2)" stroke="${b.c2}" stroke-width="1.5"/>`;
+}
+function drawShoes(s,isGirl){
+  if(isGirl){
+    if(s.style==='heels') return `<ellipse cx="85" cy="306" rx="18" ry="8" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="115" cy="306" rx="18" ry="8" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><rect x="67" y="292" width="8" height="16" rx="3" fill="${s.c2}"/><rect x="141" y="292" width="8" height="16" rx="3" fill="${s.c2}"/>`;
+    if(s.style==='boot') return `<rect x="70" y="282" width="26" height="28" rx="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><rect x="104" y="282" width="26" height="28" rx="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="83" cy="309" rx="14" ry="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1"/><ellipse cx="117" cy="309" rx="14" ry="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1"/>`;
+    if(s.style==='sandal') return `<ellipse cx="85" cy="306" rx="18" ry="8" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="115" cy="306" rx="18" ry="8" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><line x1="75" y1="300" x2="95" y2="300" stroke="${s.c2}" stroke-width="2.5" stroke-linecap="round"/><line x1="105" y1="300" x2="125" y2="300" stroke="${s.c2}" stroke-width="2.5" stroke-linecap="round"/>`;
+  }
+  if(s.style==='boot') return `<rect x="68" y="282" width="28" height="28" rx="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><rect x="104" y="282" width="28" height="28" rx="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="82" cy="309" rx="15" ry="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1"/><ellipse cx="118" cy="309" rx="15" ry="7" fill="url(#shg)" stroke="${s.c2}" stroke-width="1"/>`;
+  return `<ellipse cx="84" cy="306" rx="20" ry="9" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="116" cy="306" rx="20" ry="9" fill="url(#shg)" stroke="${s.c2}" stroke-width="1.5"/><ellipse cx="84" cy="303" rx="16" ry="5" fill="${s.c}" opacity=".55"/><ellipse cx="116" cy="303" rx="16" ry="5" fill="${s.c}" opacity=".55"/>`;
+}
+function drawHat(h){
+  const c=`fill="${h.c}"`,cs=`stroke="${h.c2}" stroke-width="2"`;
+  if(h.style==='cap') return `<path d="M62 65 Q64 35 100 30 Q136 35 138 65Z" ${c} ${cs}/><ellipse cx="100" cy="65" rx="42" ry="10" ${c} ${cs}/><path d="M58 68 L80 68 Q78 76 62 74Z" ${c} ${cs}/>`;
+  if(h.style==='beanie') return `<path d="M63 72 Q64 34 100 28 Q136 34 137 72Z" ${c} ${cs}/><rect x="60" y="68" width="80" height="12" rx="5" fill="${h.c2}"/><circle cx="100" cy="28" r="8" ${c} ${cs}/>`;
+  if(h.style==='wide') return `<path d="M68 58 Q70 32 100 28 Q130 32 132 58Z" ${c} ${cs}/><ellipse cx="100" cy="58" rx="52" ry="10" ${c} ${cs}/>`;
+  if(h.style==='crown') return `<path d="M70 56 L78 36 L90 50 L100 30 L110 50 L122 36 L130 56Z" ${c} ${cs}/><rect x="70" y="54" width="60" height="12" rx="4" fill="${h.c2}"/><circle cx="79" cy="36" r="4" fill="#FDE68A"/><circle cx="100" cy="30" r="4" fill="#FDE68A"/><circle cx="121" cy="36" r="4" fill="#FDE68A"/>`;
+  return '';
+}
+function drawHairItem(hi){
+  const c=`fill="${hi.c}"`,cs=`stroke="${hi.c2}" stroke-width="1.5"`;
+  if(hi.style==='bow') return `<path d="M78 44 Q88 34 98 44 Q88 52 78 44Z" ${c} ${cs}/><path d="M102 44 Q112 34 122 44 Q112 52 102 44Z" ${c} ${cs}/><circle cx="100" cy="44" r="5" ${c} ${cs}/>`;
+  if(hi.style==='headband') return `<path d="M62 66 Q100 54 138 66" stroke="${hi.c}" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+  if(hi.style==='clips') return `<rect x="76" y="48" width="14" height="7" rx="3" ${c} ${cs}/><rect x="110" y="48" width="14" height="7" rx="3" ${c} ${cs}/>`;
+  if(hi.style==='flowercrown') return `<path d="M62 66 Q100 50 138 66" stroke="${hi.c2}" stroke-width="3" fill="none"/>${[70,82,94,106,118,130].map(x=>`<circle cx="${x}" cy="${60-Math.abs(x-100)/8}" r="5" fill="${hi.c}"/>`).join('')}`;
+  if(hi.style==='scrunchie') return `<ellipse cx="140" cy="62" rx="9" ry="7" ${c} ${cs}/><ellipse cx="140" cy="62" rx="5" ry="4" fill="${hi.c2}" opacity=".5"/>`;
+  if(hi.style==='tiara') return `<path d="M68 56 L76 42 L100 36 L124 42 L132 56" stroke="${hi.c}" stroke-width="3" fill="none"/><circle cx="100" cy="35" r="5" fill="#FDE68A"/><circle cx="77" cy="42" r="3" ${c}/><circle cx="123" cy="42" r="3" ${c}/>`;
+  return '';
+}
+function drawJewelry(j){
+  if(j.style==='necklace'||j.style==='both') return `<path d="M84 130 Q100 140 116 130" stroke="${j.c}" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="100" cy="140" r="4" fill="${j.c}" stroke="${j.c2}" stroke-width="1"/>${j.style==='both'?`<circle cx="62" cy="88" r="4.5" fill="${j.c}" stroke="${j.c2}" stroke-width="1"/><circle cx="138" cy="88" r="4.5" fill="${j.c}" stroke="${j.c2}" stroke-width="1"/>`:''}`;
+  if(j.style==='earrings') return `<circle cx="62" cy="88" r="5.5" fill="${j.c}" stroke="${j.c2}" stroke-width="1.5"/><circle cx="138" cy="88" r="5.5" fill="${j.c}" stroke="${j.c2}" stroke-width="1.5"/>`;
+  if(j.style==='bracelet') return `<path d="M48 222 Q52 214 58 222" stroke="${j.c}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M142 222 Q148 214 152 222" stroke="${j.c}" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  return '';
+}
+function drawBag(b){
+  const c=`fill="${b.c}"`,cs=`stroke="${b.c2}" stroke-width="1.5"`;
+  if(b.style==='purse'||b.style==='clutch') return `<rect x="20" y="208" width="30" height="24" rx="8" ${c} ${cs}/><path d="M25 208 Q35 198 45 208" stroke="${b.c2}" stroke-width="2" fill="none"/><circle cx="35" cy="220" r="2.5" fill="${b.c2}"/>`;
+  if(b.style==='backpack') return `<rect x="152" y="138" width="28" height="36" rx="8" ${c} ${cs}/><path d="M155 138 L155 174" stroke="${b.c2}" stroke-width="1.5"/><path d="M177 138 L177 174" stroke="${b.c2}" stroke-width="1.5"/><rect x="158" y="148" width="18" height="12" rx="3" fill="${b.c2}" opacity=".4"/>`;
+  return `<rect x="16" y="204" width="32" height="30" rx="7" ${c} ${cs}/><path d="M20 204 Q32 192 44 204" stroke="${b.c2}" stroke-width="2" fill="none"/>`;
+}
+function bvBeach(){return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF6B35"/><stop offset="50%" stop-color="#FFB347"/><stop offset="100%" stop-color="#4A90D9"/></linearGradient></defs><rect width="380" height="460" fill="url(#sky)"/><ellipse cx="190" cy="100" rx="62" ry="62" fill="#FFE44D" opacity=".9"/><path d="M0 300 Q95 272 190 288 Q285 304 380 278 L380 460 L0 460Z" fill="#2B6CB0"/><path d="M0 320 Q95 300 190 312 Q285 324 380 300 L380 460 L0 460Z" fill="#1E4E8C"/><ellipse cx="65" cy="268" rx="42" ry="17" fill="#fff" opacity=".52"/><ellipse cx="305" cy="250" rx="36" ry="15" fill="#fff" opacity=".48"/>`;}
+function bvPlayground(){return `<defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#87CEEB"/><stop offset="100%" stop-color="#B8E8FA"/></linearGradient></defs><rect width="380" height="460" fill="url(#sky2)"/><ellipse cx="95" cy="72" rx="50" ry="28" fill="#fff" opacity=".78"/><rect x="0" y="390" width="380" height="70" fill="#5A8A3C"/><rect x="32" y="290" width="10" height="96" fill="#8B6914" rx="3"/><rect x="172" y="290" width="10" height="96" fill="#8B6914" rx="3"/><rect x="32" y="286" width="150" height="10" rx="4" fill="#8B6914"/><rect x="57" y="296" width="8" height="64" fill="#D4A76A" rx="2"/><rect x="137" y="296" width="8" height="64" fill="#D4A76A" rx="2"/><rect x="52" y="342" width="96" height="13" rx="6" fill="#FF6BB5"/><rect x="268" y="278" width="76" height="76" rx="8" fill="#F87171"/><path d="M276 278 Q306 258 336 278" fill="#DC2626"/>`;}
+function bvMall(){return `<rect width="380" height="460" fill="#EBEBEB"/><rect x="0" y="0" width="380" height="60" fill="#F5F5F5"/><rect x="10" y="76" width="108" height="148" rx="7" fill="#FFB3D9" stroke="#FF6BB5" stroke-width="2.5"/><text x="64" y="148" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff" font-weight="bold">Glam Boutique</text><rect x="136" y="76" width="108" height="148" rx="7" fill="#BAE6FD" stroke="#60A5FA" stroke-width="2.5"/><text x="190" y="148" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff" font-weight="bold">Cool Kicks</text><rect x="262" y="76" width="108" height="148" rx="7" fill="#BBF7D0" stroke="#34D399" stroke-width="2.5"/><text x="316" y="148" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#fff" font-weight="bold">Sweet Shop</text><rect x="0" y="374" width="380" height="8" fill="#9CA3AF"/><rect x="0" y="380" width="380" height="80" fill="#D1D5DB"/>`;}
+function bvParis(){return `<defs><linearGradient id="ns" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0D0B2B"/><stop offset="100%" stop-color="#1A1560"/></linearGradient></defs><rect width="380" height="460" fill="url(#ns)"/>${Array.from({length:30},(_,i)=>`<circle cx="${Math.round(12+i*12)}" cy="${Math.round(18+Math.sin(i*1.3)*22)}" r="${1+i%2}" fill="#FFE44D" opacity="${.4+.5*(i%3)/2}"/>`).join('')}<polygon points="162,400 184,188 190,166 196,188 218,400" fill="#4B5563"/><ellipse cx="190" cy="162" rx="6" ry="11" fill="#FBBF24" opacity=".95"/><text x="190" y="32" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#FBBF24" font-weight="bold">FASHION WEEK</text><rect x="32" y="410" width="316" height="50" fill="#374151"/>`;}
+function bvRedCarpet(){return `<defs><linearGradient id="rc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1A0A0A"/><stop offset="100%" stop-color="#0D0000"/></linearGradient><linearGradient id="cpt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#DC2626"/><stop offset="100%" stop-color="#991B1B"/></linearGradient></defs><rect width="380" height="460" fill="url(#rc)"/>${Array.from({length:28},(_,i)=>`<circle cx="${Math.round(10+i*13)}" cy="${Math.round(20+Math.sin(i)*30)}" r="${1+i%2}" fill="#FBBF24" opacity="${.2+.6*(i%4)/3}"/>`).join('')}<path d="M95 460 L134 240 L246 240 L285 460Z" fill="url(#cpt)"/><rect x="0" y="432" width="380" height="28" fill="#991B1B"/><text x="190" y="44" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#FBBF24" font-weight="bold">RED CARPET</text>`;}
+function bvRestaurant(){return `<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1C0F06"/><stop offset="100%" stop-color="#0E0803"/></linearGradient></defs><rect width="380" height="460" fill="url(#rg)"/><rect x="18" y="50" width="96" height="178" rx="5" fill="#3D1A0A" stroke="#D4A76A" stroke-width="1.5"/><rect x="266" y="50" width="96" height="178" rx="5" fill="#3D1A0A" stroke="#D4A76A" stroke-width="1.5"/><rect x="28" y="62" width="36" height="52" rx="3" fill="#FDE68A" opacity=".52"/><rect x="276" y="62" width="36" height="52" rx="3" fill="#FDE68A" opacity=".48"/><rect x="0" y="406" width="380" height="54" fill="#2A1506"/><ellipse cx="68" cy="408" rx="54" ry="8" fill="#3D1A0A"/><rect x="14" y="336" width="108" height="78" rx="5" fill="#3D1A0A" stroke="#D4A76A" stroke-width="1"/><ellipse cx="68" cy="336" rx="28" ry="6" fill="#F9FAFB" opacity=".82"/><ellipse cx="312" cy="408" rx="54" ry="8" fill="#3D1A0A"/><rect x="258" y="336" width="108" height="78" rx="5" fill="#3D1A0A" stroke="#D4A76A" stroke-width="1"/><ellipse cx="312" cy="336" rx="28" ry="6" fill="#F9FAFB" opacity=".82"/>`;}
+function bvSchool(){return `<rect width="380" height="460" fill="#E5E7EB"/><rect x="0" y="0" width="380" height="16" fill="#9CA3AF"/><rect x="0" y="444" width="380" height="16" fill="#9CA3AF"/><rect x="0" y="16" width="6" height="428" fill="#B5A642"/><rect x="374" y="16" width="6" height="428" fill="#B5A642"/>${[0,1,2,3].map(i=>`<rect x="${8+i*48}" y="50" width="42" height="178" rx="3" fill="#60A5FA" stroke="#3B82F6" stroke-width="1.5"/><circle cx="${29+i*48}" cy="66" r="7" fill="#F9FAFB"/><rect x="${18+i*48}" y="128" width="22" height="3" fill="#2563EB"/>`).join('')}${[0,1,2,3].map(i=>`<rect x="${208+i*42}" y="50" width="36" height="178" rx="3" fill="#F87171" stroke="#DC2626" stroke-width="1.5"/><circle cx="${226+i*42}" cy="66" r="7" fill="#F9FAFB"/><rect x="${214+i*42}" y="128" width="18" height="3" fill="#991B1B"/>`).join('')}<rect x="0" y="400" width="380" height="6" fill="#FBBF24"/><rect x="0" y="430" width="380" height="6" fill="#FBBF24"/>`;}
+function buildBgStrip(){
+  const s=document.getElementById('bgStrip');s.innerHTML='';
+  BGS.forEach((bg,i)=>{const btn=document.createElement('button');btn.className='bg-btn'+(i===0?' active':'');btn.textContent=bg.name;btn.onclick=()=>applyBg(i);s.appendChild(btn);});
+}
+function applyBg(idx){
+  selBg=idx;document.querySelectorAll('.bg-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  document.getElementById('photoBg').innerHTML=`<svg viewBox="0 0 380 460" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">${BGS[idx].fn()}</svg>`;
+}
+function snap(){
+  const flash=document.getElementById('flash');flash.classList.add('go');
+  const frame=document.getElementById('photoFrame');
+  const em=['⭐','✨','💫','🌟','💥','🎉','💖'];
+  for(let i=0;i<14;i++){const sp=document.createElement('div');sp.className='sp';sp.style.left=(4+Math.random()*88)+'%';sp.style.top=(4+Math.random()*88)+'%';sp.style.animationDelay=(Math.random()*.65)+'s';sp.textContent=em[Math.floor(Math.random()*em.length)];frame.appendChild(sp);setTimeout(()=>sp.remove(),1500);}
+  setTimeout(()=>flash.classList.remove('go'),220);
+}
+</script>
+</body>
+</html>
